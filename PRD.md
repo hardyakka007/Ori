@@ -17,13 +17,14 @@ A terminal-based football simulation game built for football fans who want the *
 
 ## 2. MVP SCOPE
 
-The MVP contains exactly three features:
+The MVP contains exactly four features:
 
 | # | Feature | Description |
 |---|---|---|
 | 1 | **Stadium Splash Screen** | The first thing you see when launching. Full atmosphere before any menu. |
 | 2 | **Match Engine** | The simulation core — stats-based, outcome-varied, event-driven. |
-| 3 | **Quick Match** | Single match between two clubs, powered by the Match Engine. |
+| 3 | **Play the Game** | PRIMARY feature — keyboard-controlled interactive football match vs AI. |
+| 4 | **Watch the Play** | Auto-simulation mode (formerly Quick Match) — pick two teams, watch it unfold. |
 
 ---
 
@@ -49,26 +50,25 @@ The following are explicitly **not** in MVP. They will be designed after v1 ship
 - "The Beautiful Game" is a widely used football expression (attributed to Pelé) — not trademarked for software
 - No "FIFA", "EA", "EA Sports", "Frostbite", or any registered game title may appear anywhere in the codebase, UI, or assets
 
-### 4.2 Club Names
-Real club names are **not trademarked** at the name level in most jurisdictions, but to be safe and original, clubs will use lightly altered names that remain instantly recognisable:
+### 4.2 Club Names — CONFIRMED BY ORI
 
-| Real Club | In-Game Name | Identifier kept |
-|---|---|---|
-| Manchester United | **Red Devils United** | Nickname + United |
-| Manchester City | **Sky Blues City** | Nickname + City |
-| Liverpool | **The Reds Liverpool** | Nickname |
-| Arsenal | **The Gunners FC** | Nickname |
-| Chelsea | **The Blues Chelsea** | Nickname |
-| Tottenham Hotspur | **Hotspur FC** | Surname |
-| Real Madrid | **Los Blancos Madrid** | Nickname |
-| FC Barcelona | **Blaugrana FC** | Nickname |
-| Atletico Madrid | **Colchoneros Madrid** | Nickname |
-| Bayern Munich | **Bavarian FC** | Geography |
-| Borussia Dortmund | **Yellow Wall FC** | Stadium/culture |
-| Juventus | **La Vecchia FC** | Nickname ("Old Lady") |
-| PSG | **Parisians FC** | Geography |
-| Inter Milan | **Nerazzurri FC** | Nickname |
-| AC Milan | **Rossoneri FC** | Nickname |
+| Real Club | In-Game Name (confirmed) |
+|---|---|
+| Manchester United | **Red Devils United** |
+| Manchester City | **Blues Man City** |
+| Liverpool | **The Reds Liverpool** |
+| Arsenal | **The Gunners FC** |
+| Chelsea | **The Blues Chelsea** |
+| Tottenham Hotspur | **Hotspur FC** |
+| Real Madrid | **White Madrid FC** |
+| FC Barcelona | **Catalonia FC** |
+| Atletico Madrid | **Colchoneros Madrid** |
+| Bayern Munich | **Munich FC** |
+| Borussia Dortmund | **Yellow Wall FC** |
+| Juventus | **La Vecchia FC** |
+| PSG | **Parisians FC** |
+| Inter Milan | **Nerazzurri FC** |
+| AC Milan | **Rossoneri FC** |
 
 ### 4.3 Player Names
 Real player names are **not trademarked** (they are people's names) and are used for informational/simulation purposes. No player likeness, image, or signature is reproduced. This is consistent with how football stats websites, fantasy football platforms, and journalism operate.
@@ -219,32 +219,99 @@ Post-match: score, possession bar, shot stats, player ratings table, MoTM callou
 
 ---
 
-## 7. FEATURE SPEC: QUICK MATCH
+## 7. FEATURE SPEC: PLAY THE GAME (PRIMARY MVP FEATURE)
 
 ### 7.1 Purpose
-The only playable mode in MVP. Let the user pick two clubs and simulate a match between them.
+The core product. An interactive, real-time, keyboard-controlled football match played
+against the computer AI in a side-scrolling terminal view.
 
-### 7.2 User Flow
+### 7.2 Confirmed Design Decisions
+
+| Decision | Choice |
+|---|---|
+| Pitch view | Side-scrolling (camera follows ball horizontally) |
+| Player control | Auto-switch to nearest home player to ball |
+| Match length | 3 real minutes = 90 game minutes |
+| Half-time | At 1:30 real time, scoreboard shows 45' |
+| AI difficulty | Fixed for MVP |
+| Goal moment | 2-second flash + GOAL! banner, then auto kick-off |
+
+### 7.3 Control Scheme
+
+| Key | Action |
+|---|---|
+| `↑ ↓ ← →` | Move controlled player |
+| `Space` | Pass to nearest teammate in attacking direction |
+| `Z` | Shoot toward goal |
+| `X` | Sprint (burst speed, temporary) |
+| `S` | Tackle / press nearest opponent |
+| `Q` | Quit match (return to menu) |
+
+### 7.4 Screen Layout (80-column terminal)
 ```
-Stadium Splash → Main Menu → Quick Match
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  Red Devils United  0 - 0  Catalonia FC                           00'        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓│
+│▓  x   x       x              A    A    A                               [G] ▓│
+│▓  G        x           ● ★                   A         A                  ▓│
+│▓  x   x       x              A    A    A                                   ▓│
+│▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓│
+├──────────────────────────────────────────────────────────────────────────────┤
+│ [↑↓←→] Move  [SPC] Pass  [Z] Shoot  [X] Sprint  [S] Tackle  [Q] Quit       │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+Symbols: `★` controlled player · `A` teammate · `x` opponent · `G` keeper · `●` ball
+
+### 7.5 Pitch Mechanics
+- Abstract pitch: 200 units wide × 5 rows tall (y: 0.0–4.0)
+- Goals at x=0 (home GK) and x=200 (away GK), y=1.5–2.5 (centre strip)
+- Camera: 76-unit window following ball horizontally
+- Ball friction: decelerates naturally after pass/shot
+- Ball bounces off top/bottom touchlines
+- Out of bounds (side): bounces back (no throw-in logic in MVP)
+
+### 7.6 AI Behaviour (fixed difficulty)
+- **Ball carrier:** moves toward opponent goal, shoots when close (x > 150)
+- **Attackers (no ball):** run into space ahead of the ball
+- **Midfielders:** press toward ball when opponent has possession
+- **Defenders:** position between ball and own goal
+- **GK:** tracks ball vertically, stays near goal line
+
+### 7.7 Half-Time
+- Pause at 45 game minutes (1:30 real time)
+- Show half-time screen with score
+- Teams swap attack direction for second half
+- Press `Enter` to kick off second half
+
+### 7.8 Full-Time
+- At 90 game minutes (3:00 real time), match ends
+- Show full-time screen: score, goal scorers, Player of the Match
+- Press `Enter` to return to main menu
+
+---
+
+## 8. FEATURE SPEC: WATCH THE PLAY (formerly Quick Match)
+
+### 8.1 Purpose
+Auto-simulation mode — pick two clubs, watch the match play out as a live event feed.
+No interaction during the match. Good for seeing how teams match up statistically.
+
+### 8.2 User Flow
+```
+Stadium Splash → Main Menu → Watch the Play
   → Show club list (numbered, with league)
   → User picks Home team
   → User picks Away team
   → Confirm: "Kick off? [y/n]"
-  → Match simulation runs
-  → Live event feed displayed
+  → Match simulation runs instantly
+  → Live event feed displayed (coloured by event type)
   → Post-match stats screen
   → Press Enter → return to Main Menu
 ```
 
-### 7.3 Club Selection
-- Numbered list, 1–15
-- Each entry shows: In-game club name, league, playing style
-- User enters a number for Home, then a number for Away
-- Same club can be selected for both (derby scenario — valid)
-
-### 7.4 Post-Match Screen
-Sections shown after the final whistle:
+### 8.3 Post-Match Screen
 1. **Score** (large, prominent)
 2. **Goal scorers** with minutes
 3. **Match stats** — possession, shots, shots on target
@@ -253,42 +320,44 @@ Sections shown after the final whistle:
 
 ---
 
-## 8. TECHNICAL ARCHITECTURE
+## 9. TECHNICAL ARCHITECTURE
 
 ### 8.1 Stack
 - **Language:** Python 3.10+
 - **Dependencies:** Standard library only (no pip installs required)
 - **Terminal:** ANSI escape codes for colour — works on macOS, Linux, Windows Terminal
 
-### 8.2 File Structure (MVP)
+### 9.2 File Structure (MVP)
 ```
-tbg2026/
-├── main.py              ← Entry point
+/
+├── main.py                ← Entry point
 ├── data/
-│   ├── players.py       ← Player roster (76 players + Icons)
-│   └── clubs.py         ← Club data (renamed), leagues, styles
+│   ├── players.py         ← Player roster (76 players + Icons)
+│   └── clubs.py           ← Club data (renamed), leagues, styles
 ├── engine/
-│   ├── match.py         ← Simulation engine
-│   └── display.py       ← Terminal UI (colours, tables, menus)
+│   ├── match.py           ← Watch the Play simulation engine
+│   └── display.py         ← Terminal UI (colours, tables, menus)
 ├── screens/
-│   └── stadium.py       ← Splash screen (ASCII art + player card)
+│   └── stadium.py         ← Splash screen (ASCII art + player card)
 └── modes/
-    └── quick_match.py   ← Quick Match mode
+    ├── play_game.py        ← Play the Game (curses interactive)
+    └── watch_play.py       ← Watch the Play (auto-simulation)
 ```
 
-### 8.3 Entry Point
+### 9.3 Entry Point
 ```
 python main.py
 ```
 
-### 8.4 Terminal Requirements
-- Minimum 80-column width
-- UTF-8 support (for ⚽ 🟨 🟥 ★ characters)
+### 9.4 Terminal Requirements
+- Minimum 80-column width (Play the Game requires exactly 80+)
+- UTF-8 support (for ⚽ 🟨 🟥 ★ ● characters)
 - ANSI colour support
+- curses support (standard on macOS/Linux; `windows-curses` on Windows)
 
 ---
 
-## 9. NON-FUNCTIONAL REQUIREMENTS
+## 10. NON-FUNCTIONAL REQUIREMENTS
 
 | Requirement | Target |
 |---|---|
@@ -301,31 +370,41 @@ python main.py
 
 ---
 
-## 10. SUCCESS CRITERIA FOR MVP
+## 11. SUCCESS CRITERIA FOR MVP
 
 The MVP is considered complete when:
 
 - [ ] `python main.py` launches and shows the stadium splash screen
 - [ ] A different player is spotlit every time the game loads
-- [ ] The main menu is visible below the stadium art
-- [ ] Career Mode and The Journey are visible but marked `[Coming Soon]`
-- [ ] Selecting Quick Match shows the club list with in-game names (no "FIFA", "EA", "Premier League")
-- [ ] A match between any two clubs simulates in under 1 second
-- [ ] Goal events are shown in green, cards in yellow/red
-- [ ] Post-match shows score, possession, shots, top ratings, MoTM
+- [ ] The main menu shows: Play the Game, Watch the Play, Career Mode [Coming Soon], The Journey [Coming Soon], Quit
+- [ ] **Play the Game:** arrow keys move the controlled player
+- [ ] **Play the Game:** Space passes to nearest teammate
+- [ ] **Play the Game:** Z shoots toward goal
+- [ ] **Play the Game:** X sprints
+- [ ] **Play the Game:** S tackles
+- [ ] **Play the Game:** controlled player auto-switches to nearest player to ball
+- [ ] **Play the Game:** scoreboard shows game time (00'–90')
+- [ ] **Play the Game:** half-time pause at 45', teams swap sides for second half
+- [ ] **Play the Game:** GOAL flash when ball crosses goal line, 2-second pause, auto kick-off
+- [ ] **Watch the Play:** auto-simulation in under 1 second with coloured event feed
 - [ ] No FIFA, EA Sports, Premier League, or other trademarked brand names appear anywhere in the output
 - [ ] The word "FIFA" appears zero times in any source file
 
 ---
 
-## 11. OPEN QUESTIONS (to be resolved before build)
+## 12. RESOLVED QUESTIONS
 
-| # | Question | Owner |
+| # | Question | Answer |
 |---|---|---|
-| 1 | Final game name confirmation (working title: THE BEAUTIFUL GAME 2026) | Ori |
-| 2 | Should club names use real names with a disclaimer, or the altered names in §4.2? | Ori |
-| 3 | Any specific players Ori wants featured/prioritised in the player spotlight? | Ori |
+| 1 | Game name | THE BEAUTIFUL GAME 2026 ✅ |
+| 2 | Club names | Altered names per §4.2 ✅ |
+| 3 | Spotlight players | Existing roster is good ✅ |
+| 4 | Pitch view | Side-scrolling ✅ |
+| 5 | Player control | Auto-switch to nearest ✅ |
+| 6 | Match length | 3 real min = 90 game min, half at 1:30 ✅ |
+| 7 | AI difficulty | Fixed for MVP ✅ |
+| 8 | Goal moment | Flash + 2-second auto-resume ✅ |
 
 ---
 
-*End of PRD — Version 1.0 Draft*
+*End of PRD — Version 1.1 — All open questions resolved. Build approved.*

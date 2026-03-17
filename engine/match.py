@@ -1,5 +1,5 @@
 """
-FIFA 18 Match Simulation Engine
+The Beautiful Game 2026 — Match Simulation Engine
 Simulates a 90-minute match using team/player ratings, styles, and RNG.
 """
 
@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from typing import List, Tuple, Optional
 
 from data.players import Player, FORMATIONS
-from data.teams import Club, TEAM_STYLES
+from data.clubs import Club, TEAM_STYLES
 
 
 @dataclass
@@ -53,7 +53,7 @@ class MatchResult:
 
 
 class MatchSimulator:
-    """Simulates a FIFA 18 match between two squads."""
+    """Simulates a match between two squads."""
 
     def __init__(self):
         self.rng = random.Random()
@@ -257,7 +257,7 @@ class MatchSimulator:
 
 def display_match_live(result: MatchResult):
     """Print a formatted live match commentary."""
-    from engine.display import color, CYAN, YELLOW, GREEN, RED, RESET, BOLD
+    from engine.display import color, CYAN, YELLOW, GREEN, RED, RESET, BOLD, DIM
 
     print(f"\n{BOLD}{'─'*60}{RESET}")
     print(f"{BOLD}{color(result.home_team, CYAN):>28}  vs  {color(result.away_team, CYAN)}{RESET}")

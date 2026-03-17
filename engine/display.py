@@ -1,35 +1,36 @@
-"""Terminal display helpers — colors, tables, prompts."""
+"""The Beautiful Game 2026 — Terminal display helpers."""
 
 import os
 import shutil
 
-# ANSI color codes
-RESET  = "\033[0m"
-BOLD   = "\033[1m"
-DIM    = "\033[2m"
-RED    = "\033[91m"
-GREEN  = "\033[92m"
-YELLOW = "\033[93m"
-BLUE   = "\033[94m"
-MAGENTA= "\033[95m"
-CYAN   = "\033[96m"
-WHITE  = "\033[97m"
+# ANSI colour codes
+RESET   = "\033[0m"
+BOLD    = "\033[1m"
+DIM     = "\033[2m"
+RED     = "\033[91m"
+GREEN   = "\033[92m"
+YELLOW  = "\033[93m"
+BLUE    = "\033[94m"
+MAGENTA = "\033[95m"
+CYAN    = "\033[96m"
+WHITE   = "\033[97m"
+GOLD    = "\033[33m"
 BG_BLUE  = "\033[44m"
 BG_GREEN = "\033[42m"
 
 
-def color(text: str, code: str) -> str:
+def color(text, code: str) -> str:
     return f"{code}{text}{RESET}"
 
 
-def bold(text: str) -> str:
+def bold(text) -> str:
     return f"{BOLD}{text}{RESET}"
 
 
 def header(title: str, width: int = 60):
     pad = (width - len(title) - 2) // 2
     print(f"\n{BG_BLUE}{BOLD}{'═'*width}{RESET}")
-    print(f"{BG_BLUE}{BOLD}{'':>{pad}} {title} {'':>{pad}}{RESET}")
+    print(f"{BG_BLUE}{BOLD}{' '*pad} {title} {' '*pad}{RESET}")
     print(f"{BG_BLUE}{BOLD}{'═'*width}{RESET}\n")
 
 
@@ -40,14 +41,12 @@ def section(title: str, width: int = 60):
 
 
 def table(headers: list, rows: list, col_widths: list = None):
-    """Print a simple ASCII table."""
     if not rows:
         print(f"  {DIM}(no data){RESET}")
         return
     if col_widths is None:
         col_widths = [max(len(str(h)), max(len(str(r[i])) for r in rows))
                       for i, h in enumerate(headers)]
-    # Header
     sep = "  ".join(f"{h:<{w}}" for h, w in zip(headers, col_widths))
     print(f"  {BOLD}{sep}{RESET}")
     print(f"  {'  '.join('─'*w for w in col_widths)}")
@@ -57,7 +56,6 @@ def table(headers: list, rows: list, col_widths: list = None):
 
 
 def menu(title: str, options: list) -> int:
-    """Show a numbered menu and return the 1-based selection."""
     section(title)
     for i, opt in enumerate(options, 1):
         print(f"  {BOLD}{YELLOW}{i}{RESET}. {opt}")
@@ -96,9 +94,8 @@ def rating_stars(rating: int, max_rating: int = 5) -> str:
     return f"{YELLOW}{'★'*rating}{'☆'*(max_rating-rating)}{RESET}"
 
 
-def player_card(player, short: bool = False):
-    """Print a styled player card."""
-    from data.players import Player
+def player_card_inline(player, short: bool = False):
+    """Print a styled player card inline (non-curses)."""
     pos_color = {
         "GK": YELLOW, "CB": BLUE, "LB": BLUE, "RB": BLUE,
         "CDM": GREEN, "CM": GREEN, "CAM": CYAN,
@@ -113,7 +110,7 @@ def player_card(player, short: bool = False):
         return
 
     print(f"\n  ┌{'─'*38}┐")
-    print(f"  │ {BOLD}{color(player.overall, YELLOW)} {color(player.position, pos_color)}"
+    print(f"  │ {BOLD}{color(str(player.overall), YELLOW)} {color(player.position, pos_color)}"
           f"  {player.name:<25}{RESET}│")
     print(f"  │  {player.nationality:<15} {player.club:<20} │")
     print(f"  ├{'─'*38}┤")
@@ -121,18 +118,19 @@ def player_card(player, short: bool = False):
     print(f"  │  DRI {player.dribbling:<3}  DEF {player.defending:<3}  PHY {player.physical:<3}   │")
     print(f"  │  Skill {rating_stars(player.skill_moves)}  Weak Foot {rating_stars(player.weak_foot)}  │")
     if player.is_icon:
-        print(f"  │         {color('★ FUT ICON ★', YELLOW)}               │")
+        print(f"  │         {color('★ LEGEND ★', GOLD)}                  │")
     print(f"  └{'─'*38}┘")
 
 
-def fifa_banner():
+def tbg_banner():
+    """The Beautiful Game 2026 — main title banner."""
     print(f"""
-{BOLD}{YELLOW}
- ███████╗██╗███████╗ █████╗     ██╗ █████╗
- ██╔════╝██║██╔════╝██╔══██╗   ███║██╔══██╗
- █████╗  ██║█████╗  ███████║   ╚██║╚█████╔╝
- ██╔══╝  ██║██╔══╝  ██╔══██║    ██║██╔══██╗
- ██║     ██║██║     ██║  ██║    ██║╚█████╔╝
- ╚═╝     ╚═╝╚═╝     ╚═╝  ╚═╝    ╚═╝ ╚════╝
-{RESET}{CYAN}        EA SPORTS  •  The Journey Continues{RESET}
+{BOLD}{GOLD}
+  ████████╗██████╗  ██████╗
+  ╚══██╔══╝██╔══██╗██╔════╝
+     ██║   ██████╔╝██║  ███╗
+     ██║   ██╔══██╗██║   ██║
+     ██║   ██████╔╝╚██████╔╝
+     ╚═╝   ╚═════╝  ╚═════╝
+{RESET}{WHITE}     THE BEAUTIFUL GAME  {GOLD}2026{RESET}
 """)
