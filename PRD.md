@@ -1,15 +1,15 @@
 # THE BEAUTIFUL GAME 2026
 ## Product Requirements Document (PRD)
-### MVP Release — Version 1.1
+### MVP Release — Version 1.2
 **Author:** Claude (on behalf of Ori Franklin)
-**Date:** 2026-03-17
+**Date:** 2026-03-18
 **Status:** DRAFT — Awaiting owner approval
 
 ---
 
 ## 1. VISION
 
-A terminal-based football simulation game built for football fans who want the *feel* of a modern football game without a controller or a GPU. The experience should be atmospheric, stat-driven, and replayable in under 10 minutes per session.
+A **web-based** football simulation game built for football fans who want the *feel* of a modern football game without a controller or a GPU. The experience should be atmospheric, stat-driven, and replayable in under 10 minutes per session.
 
 **Guiding principle:** Every screen should feel like you're inside a football world, not a spreadsheet.
 
@@ -23,8 +23,8 @@ The MVP contains exactly four features:
 |---|---|---|
 | 1 | **Stadium Splash Screen** | The first thing you see when launching. Full atmosphere before any menu. |
 | 2 | **Match Engine** | The simulation core — stats-based, outcome-varied, event-driven. |
-| 3 | **Play the Game** | PRIMARY feature — keyboard-controlled interactive football match vs AI. |
-| 4 | **Watch the Play** | Auto-simulation mode (formerly Quick Match) — pick two teams, watch it unfold. |
+| 3 | **Play the Game** | PRIMARY feature — keyboard-controlled interactive football match vs AI on an HTML5 Canvas. |
+| 4 | **Watch the Play** | Auto-simulation mode — pick two teams, watch the event feed unfold. |
 
 ---
 
@@ -40,6 +40,7 @@ The following are explicitly **not** in MVP. They will be designed after v1 ship
 | Player Database browser | Utility screen, no gameplay value at MVP |
 | Leagues / Tournaments | Season simulation requires standings, scheduling, tiebreakers |
 | Save / Load | No persistent state needed when there's only one mode |
+| Mobile / touch controls | Canvas game targets desktop keyboard for MVP |
 
 ---
 
@@ -87,63 +88,63 @@ Real player names are **not trademarked** (they are people's names) and are used
 ## 5. FEATURE SPEC: STADIUM SPLASH SCREEN
 
 ### 5.1 Purpose
-Replace the current plain text main menu with a full atmospheric stadium screen. This is the emotional hook — the thing that makes you *feel* like you're about to play football.
+The landing page of the web app. A full atmospheric stadium screen before any menu interaction. This is the emotional hook — the thing that makes you *feel* like you're about to play football.
 
-### 5.2 Layout
+### 5.2 Layout (Web)
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  TOP HALF: Stadium art + rotating player card                   │
+│  TOP HALF: Stadium hero section                                 │
 │                                                                 │
-│   [ASCII Stadium — stands, pitch markings, floodlights]        │
-│   [Crowd rows in ASCII across the stands]                       │
+│   [Stadium SVG/CSS art — stands, pitch markings, floodlights]  │
+│   [Crowd rows with animated subtle sway]                        │
 │                                                                 │
 │   ★  PLAYER SPOTLIGHT  ★                                       │
 │   [Player card: name, club, OVR, key stats]                     │
-│   [Different player rendered on every launch]                   │
+│   [Different player rendered on every page load]                │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │  BOTTOM HALF: Main menu                                         │
 │                                                                 │
 │   THE BEAUTIFUL GAME 2026                                       │
 │                                                                 │
-│   1. Play the Game                                              │
-│   2. Watch the Play                                             │
-│   3. [greyed out — coming soon] Career Mode                     │
-│   4. [greyed out — coming soon] The Journey                     │
-│   5. Quit                                                       │
+│   [ Play the Game ]                                             │
+│   [ Watch the Play ]                                            │
+│   [ Career Mode — Coming Soon ]   (greyed, disabled)           │
+│   [ The Journey — Coming Soon ]   (greyed, disabled)           │
+│                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ### 5.3 Stadium Art Requirements
+- Rendered with SVG or CSS — no raster images required
 - Visible **pitch markings**: centre circle, penalty areas, touchlines
-- **Stands** on both sides with ASCII crowd characters (`♟ ♙ | o O`)
-- **Floodlights** implied by top corners
-- **Scoreboard** element (blank/00:00 on startup)
-- Minimum terminal width: 80 columns
-- Scales gracefully to 120 columns
+- **Stands** on both sides with a stylised crowd layer
+- **Floodlights** implied in the top corners
+- **Scoreboard** element (blank / 00:00 on startup)
+- Responsive: minimum 800 px wide desktop layout; graceful scaling up to 1440 px
 
 ### 5.4 Player Spotlight
-- On each launch, one player is selected at random from the full roster (76 players + Icons)
-- The card shows: Name, Club (in-game name), Position, OVR, and three headline stats relevant to their position
+- On each page load, the Flask backend selects one player at random from the full roster (76 players + Icons) and returns it via the `/api/spotlight` endpoint
+- The Vue component displays: Name, Club (in-game name), Position, OVR, and three headline stats relevant to their position
   - GK: Reflexes, Positioning, Kicking
   - DEF: Defending, Physical, Pace
   - MID: Passing, Dribbling, Vision
   - ATT: Shooting, Pace, Dribbling
 - Cards are styled differently by overall tier:
-  - 90+ OVR → Gold border styling
-  - 85–89 → Silver border styling
-  - 75–84 → Standard
-- One new player is shown per session (not per keypress — it randomises at load, stays fixed during the session)
+  - 90+ OVR → Gold card styling
+  - 85–89 → Silver card styling
+  - 75–84 → Standard card styling
+- One player per page load — does not re-roll on navigation within the SPA
 
 ### 5.5 "Coming Soon" Menu Items
-Career Mode and The Journey appear in the menu but are visually dimmed and non-selectable, with a `[Coming Soon]` tag. This communicates roadmap intent without shipping incomplete features.
+Career Mode and The Journey appear as disabled buttons with a `Coming Soon` badge. This communicates roadmap intent without shipping incomplete features.
 
 ---
 
 ## 6. FEATURE SPEC: MATCH ENGINE
 
 ### 6.1 Purpose
-The statistical simulation core that determines match outcomes, generates minute-by-minute events, calculates player ratings, and identifies the Man of the Match.
+The statistical simulation core that determines match outcomes, generates minute-by-minute events, calculates player ratings, and identifies the Man of the Match. Runs entirely on the **Python backend** and is exposed via REST API.
 
 ### 6.2 Simulation Model
 The engine uses a **possession-then-attack** model per simulated phase:
@@ -166,7 +167,7 @@ MISS   → off target / blocked / over the bar
 ```
 Resolution probability uses:
 - Attack rating vs defence rating ratio
-- Fitness modifier (degrades with matches played — not tracked in MVP, fixed at 100%)
+- Fitness modifier (fixed at 100% for MVP)
 - Team pressing intensity penalty
 - Random noise (Gaussian, σ=0.08)
 
@@ -198,44 +199,55 @@ Each club has a defined playing style that modifies simulation parameters:
 | Direct Play | -3% | ×1.2 | ×0.9 |
 | Balanced | 0% | ×1.0 | ×1.0 |
 
-### 6.4 Output
-The engine returns a `MatchResult` object containing:
-- Final score
-- Scorer list with minutes
-- Full event timeline
-- Possession stats
-- Shot counts (total + on target)
-- Player rating map
-- Man of the Match
+### 6.4 API Output
+The engine exposes results as JSON via the `/api/simulate` endpoint:
 
-### 6.5 Match Display
-Events are printed chronologically with colour coding:
-- ⚽ Goals → **Green**
-- 🟨 Yellow card → **Yellow**
-- 🟥 Red card → **Red**
-- 🧤 Saves → **Cyan**
-- 💨 Misses → **Dim**
+```json
+{
+  "home": "Red Devils United",
+  "away": "Catalonia FC",
+  "score": { "home": 2, "away": 1 },
+  "scorers": [
+    { "team": "home", "player": "Rashford", "minute": 34 },
+    { "team": "away", "player": "Lewandowski", "minute": 61 },
+    { "team": "home", "player": "Fernandes", "minute": 87 }
+  ],
+  "events": [ ... ],
+  "possession": { "home": 54, "away": 46 },
+  "shots": { "home": 14, "away": 9 },
+  "shots_on_target": { "home": 6, "away": 4 },
+  "ratings": { ... },
+  "motm": { "player": "Fernandes", "rating": 8.7 }
+}
+```
 
-Post-match: score, possession bar, shot stats, player ratings table, MoTM callout.
+### 6.5 Event Display (Web)
+Events are rendered in the Vue event feed with colour-coded badges:
+- ⚽ Goals → green highlight row
+- 🟨 Yellow card → yellow highlight row
+- 🟥 Red card → red highlight row
+- 🧤 Saves → cyan/teal highlight row
+- 💨 Misses → dimmed row
 
 ---
 
 ## 7. FEATURE SPEC: PLAY THE GAME (PRIMARY MVP FEATURE)
 
 ### 7.1 Purpose
-The core product. An interactive, real-time, keyboard-controlled football match played
-against the computer AI in a side-scrolling terminal view.
+The core product. An interactive, real-time, keyboard-controlled football match played against the computer AI. Rendered on an **HTML5 Canvas** inside the browser. The Python backend manages match state via WebSocket; the Canvas renders it at ~30 fps.
 
 ### 7.2 Confirmed Design Decisions
 
 | Decision | Choice |
 |---|---|
+| Render target | HTML5 Canvas (keyboard-controlled) |
+| Communication | WebSocket (Flask-SocketIO) — real-time game state |
 | Pitch view | Side-scrolling (camera follows ball horizontally) |
 | Player control | Auto-switch to nearest home player to ball |
 | Match length | 3 real minutes = 90 game minutes |
 | Half-time | At 1:30 real time, scoreboard shows 45' |
 | AI difficulty | Fixed for MVP |
-| Goal moment | 2-second flash + GOAL! banner, then auto kick-off |
+| Goal moment | 2-second flash + GOAL! overlay, then auto kick-off |
 
 ### 7.3 Control Scheme
 
@@ -246,29 +258,31 @@ against the computer AI in a side-scrolling terminal view.
 | `Z` | Shoot toward goal |
 | `X` | Sprint (burst speed, temporary) |
 | `S` | Tackle / press nearest opponent |
-| `Q` | Quit match (return to menu) |
+| `Esc` | Pause / quit match (return to menu) |
 
-### 7.4 Screen Layout (80-column terminal)
+### 7.4 Canvas Layout
 ```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  Red Devils United  0 - 0  Catalonia FC                           00'        │
-├──────────────────────────────────────────────────────────────────────────────┤
-│▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓│
-│▓  x   x       x              A    A    A                               [G] ▓│
-│▓  G        x           ● ★                   A         A                  ▓│
-│▓  x   x       x              A    A    A                                   ▓│
-│▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓│
-├──────────────────────────────────────────────────────────────────────────────┤
-│ [↑↓←→] Move  [SPC] Pass  [Z] Shoot  [X] Sprint  [S] Tackle  [Q] Quit       │
-└──────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│  Scorebar:  Red Devils United  0 - 0  Catalonia FC  00'  │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│   [HTML5 Canvas — pitch rendered at ~800×400 px]        │
+│                                                          │
+│   Pitch markings: centre line, penalty areas, goals     │
+│   Players: coloured circles + number labels             │
+│   Ball: white circle                                    │
+│   Controlled player: highlighted ring                   │
+│                                                          │
+├──────────────────────────────────────────────────────────┤
+│  [↑↓←→] Move  [SPC] Pass  [Z] Shoot  [X] Sprint         │
+│  [S] Tackle  [Esc] Pause                                 │
+└──────────────────────────────────────────────────────────┘
 ```
-
-Symbols: `★` controlled player · `A` teammate · `x` opponent · `G` keeper · `●` ball
 
 ### 7.5 Pitch Mechanics
 - Abstract pitch: 200 units wide × 5 rows tall (y: 0.0–4.0)
 - Goals at x=0 (home GK) and x=200 (away GK), y=1.5–2.5 (centre strip)
-- Camera: 76-unit window following ball horizontally
+- Canvas maps game units to pixels; camera window follows ball horizontally
 - Ball friction: decelerates naturally after pass/shot
 - Ball bounces off top/bottom touchlines
 - Out of bounds (side): bounces back (no throw-in logic in MVP)
@@ -282,79 +296,116 @@ Symbols: `★` controlled player · `A` teammate · `x` opponent · `G` keeper �
 
 ### 7.7 Half-Time
 - Pause at 45 game minutes (1:30 real time)
-- Show half-time screen with score
+- Canvas overlaid with half-time screen showing score
 - Teams swap attack direction for second half
-- Press `Enter` to kick off second half
+- Click "Kick Off" button or press `Enter` to resume
 
 ### 7.8 Full-Time
 - At 90 game minutes (3:00 real time), match ends
-- Show full-time screen: score, goal scorers, Player of the Match
-- Press `Enter` to return to main menu
+- Canvas overlaid with full-time screen: score, goal scorers, Player of the Match
+- Click "Back to Menu" or press `Enter` to return to the splash screen
 
 ---
 
 ## 8. FEATURE SPEC: WATCH THE PLAY (formerly Quick Match)
 
 ### 8.1 Purpose
-Auto-simulation mode — pick two clubs, watch the match play out as a live event feed.
-No interaction during the match. Good for seeing how teams match up statistically.
+Auto-simulation mode — pick two clubs, watch the match play out as a live event feed in the browser. No interaction during the match. Good for seeing how teams match up statistically.
 
 ### 8.2 User Flow
 ```
-Stadium Splash → Main Menu → Watch the Play
-  → Show club list (numbered, with league)
+Splash → Main Menu → Watch the Play
+  → Club selection screen (searchable dropdown or grid)
   → User picks Home team
   → User picks Away team
-  → Confirm: "Kick off? [y/n]"
-  → Match simulation runs instantly
-  → Live event feed displayed (coloured by event type)
+  → "Kick Off" button
+  → POST /api/simulate returns full match result
+  → Events streamed into feed one-by-one (timed, e.g. 80ms per event)
   → Post-match stats screen
-  → Press Enter → return to Main Menu
+  → "Back to Menu" button → Splash screen
 ```
 
 ### 8.3 Post-Match Screen
 1. **Score** (large, prominent)
 2. **Goal scorers** with minutes
-3. **Match stats** — possession, shots, shots on target
+3. **Match stats** — possession bar, shots, shots on target
 4. **Player ratings** — top 5 performers from each side
-5. **Man of the Match** — highlighted callout
+5. **Man of the Match** — highlighted callout card
 
 ---
 
 ## 9. TECHNICAL ARCHITECTURE
 
 ### 9.1 Stack
-- **Language:** Python 3.10+
-- **Dependencies:** Standard library only (no pip installs required)
-- **Terminal:** ANSI escape codes for colour — works on macOS, Linux, Windows Terminal
+
+| Layer | Technology |
+|---|---|
+| Backend | Python 3.10+, Flask, Flask-SocketIO |
+| Frontend | Vue 3 (Vite build) |
+| Real-time (Play the Game) | Socket.IO (WebSocket) |
+| Styling | Plain CSS (no UI framework) |
+| Data | Static Python modules (no database) |
+| Package management (BE) | pip / requirements.txt |
+| Package management (FE) | npm / package.json |
 
 ### 9.2 File Structure (MVP)
 ```
 /
-├── main.py                ← Entry point
+├── app.py                     ← Flask entry point + SocketIO setup
+├── requirements.txt           ← Python dependencies
 ├── data/
-│   ├── players.py         ← Player roster (76 players + Icons)
-│   └── clubs.py           ← Club data (renamed), leagues, styles
+│   ├── players.py             ← Player roster (76 players + Icons)
+│   └── clubs.py               ← Club data, leagues, styles
 ├── engine/
-│   ├── match.py           ← Watch the Play simulation engine
-│   └── display.py         ← Terminal UI (colours, tables, menus)
-├── screens/
-│   └── stadium.py         ← Splash screen (ASCII art + player card)
-└── modes/
-    ├── play_game.py        ← Play the Game (curses interactive)
-    └── watch_play.py       ← Watch the Play (auto-simulation)
+│   ├── match.py               ← Match simulation engine
+│   └── game_loop.py           ← Real-time Play the Game state machine
+├── api/
+│   └── routes.py              ← REST endpoints (/api/simulate, /api/spotlight, /api/clubs)
+├── sockets/
+│   └── game.py                ← SocketIO event handlers for Play the Game
+└── frontend/                  ← Vue 3 app (Vite)
+    ├── index.html
+    ├── vite.config.js
+    ├── package.json
+    └── src/
+        ├── main.js
+        ├── App.vue
+        ├── router/
+        │   └── index.js        ← Vue Router (splash, play, watch)
+        ├── views/
+        │   ├── SplashView.vue  ← Stadium splash + main menu
+        │   ├── PlayView.vue    ← Canvas-based interactive match
+        │   └── WatchView.vue   ← Auto-simulation event feed
+        ├── components/
+        │   ├── PlayerCard.vue  ← Spotlight card
+        │   ├── EventFeed.vue   ← Live event list (Watch the Play)
+        │   ├── Scorebar.vue    ← Match header (score + time)
+        │   └── PostMatch.vue   ← Full-time stats screen
+        └── composables/
+            ├── useSocket.js    ← Socket.IO connection for Play the Game
+            └── useMatchSim.js  ← Watch the Play simulation API calls
 ```
 
-### 9.3 Entry Point
-```
-python main.py
-```
+### 9.3 API Endpoints
 
-### 9.4 Terminal Requirements
-- Minimum 80-column width (Play the Game requires exactly 80+)
-- UTF-8 support (for ⚽ 🟨 🟥 ★ ● characters)
-- ANSI colour support
-- curses support (standard on macOS/Linux; `windows-curses` on Windows)
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/spotlight` | Returns random player for splash screen |
+| GET | `/api/clubs` | Returns full club list |
+| POST | `/api/simulate` | Runs Watch the Play simulation, returns full MatchResult |
+| WS | `socket.io` | Real-time game state for Play the Game |
+
+### 9.4 Running the App (Development)
+```bash
+# Backend
+pip install -r requirements.txt
+python app.py          # Flask dev server on :5000
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev            # Vite dev server on :5173 (proxies /api and /socket.io to :5000)
+```
 
 ---
 
@@ -362,12 +413,15 @@ python main.py
 
 | Requirement | Target |
 |---|---|
-| Match simulation speed | < 0.5 seconds per match |
-| Splash screen load time | < 0.2 seconds |
-| Terminal width minimum | 80 columns |
+| Match simulation speed | < 0.5 seconds per `/api/simulate` call |
+| Splash screen load time | < 1 second (first contentful paint) |
+| Canvas frame rate | ≥ 30 fps during Play the Game |
+| WebSocket latency | < 50 ms game state round-trip (localhost) |
+| Browser support | Chrome 110+, Firefox 110+, Safari 16+ |
+| Minimum screen width | 900 px |
 | Python version | 3.10+ |
-| External dependencies | Zero |
-| OS compatibility | macOS, Linux, Windows Terminal |
+| External Python dependencies | Flask, Flask-SocketIO only |
+| Mobile | Out of scope for MVP |
 
 ---
 
@@ -375,19 +429,20 @@ python main.py
 
 The MVP is considered complete when:
 
-- [ ] `python main.py` launches and shows the stadium splash screen
-- [ ] A different player is spotlit every time the game loads
-- [ ] The main menu shows: Play the Game, Watch the Play, Career Mode [Coming Soon], The Journey [Coming Soon], Quit
-- [ ] **Play the Game:** arrow keys move the controlled player
+- [ ] Navigating to `localhost:5173` shows the stadium splash screen
+- [ ] A different player is spotlit every time the page loads (`/api/spotlight`)
+- [ ] The main menu shows: Play the Game, Watch the Play, Career Mode [Coming Soon], The Journey [Coming Soon]
+- [ ] **Play the Game:** arrow keys move the controlled player on the Canvas
 - [ ] **Play the Game:** Space passes to nearest teammate
 - [ ] **Play the Game:** Z shoots toward goal
 - [ ] **Play the Game:** X sprints
 - [ ] **Play the Game:** S tackles
 - [ ] **Play the Game:** controlled player auto-switches to nearest player to ball
-- [ ] **Play the Game:** scoreboard shows game time (00'–90')
-- [ ] **Play the Game:** half-time pause at 45', teams swap sides for second half
-- [ ] **Play the Game:** GOAL flash when ball crosses goal line, 2-second pause, auto kick-off
-- [ ] **Watch the Play:** auto-simulation in under 1 second with coloured event feed
+- [ ] **Play the Game:** scorebar shows game time (00'–90')
+- [ ] **Play the Game:** half-time overlay at 45', teams swap sides for second half
+- [ ] **Play the Game:** GOAL overlay when ball crosses goal line, 2-second pause, auto kick-off
+- [ ] **Watch the Play:** club selection → POST /api/simulate → animated event feed
+- [ ] **Watch the Play:** post-match screen shows score, scorers, stats, ratings, MoTM
 - [ ] No FIFA, EA Sports, Premier League, or other trademarked brand names appear anywhere in the output
 - [ ] The word "FIFA" appears zero times in any source file
 
@@ -405,7 +460,11 @@ The MVP is considered complete when:
 | 6 | Match length | 3 real min = 90 game min, half at 1:30 ✅ |
 | 7 | AI difficulty | Fixed for MVP ✅ |
 | 8 | Goal moment | Flash + 2-second auto-resume ✅ |
+| 9 | App platform | Web-based (not terminal) ✅ |
+| 10 | Backend | Python / Flask + Flask-SocketIO ✅ |
+| 11 | Frontend | Vue 3 (Vite) ✅ |
+| 12 | Interactive render | HTML5 Canvas (keyboard input) ✅ |
 
 ---
 
-*End of PRD — Version 1.1 — All open questions resolved. Build approved.*
+*End of PRD — Version 1.2 — Platform updated to web. Awaiting owner approval before build resumes.*
