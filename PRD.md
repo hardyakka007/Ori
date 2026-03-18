@@ -99,7 +99,11 @@ The landing page of the web app. A full atmospheric stadium screen before any me
 │   [Crowd rows with animated subtle sway]                        │
 │                                                                 │
 │   ★  PLAYER SPOTLIGHT  ★                                       │
-│   [Player card: name, club, OVR, key stats]                     │
+│   ┌──────────────────────────────────────────────┐             │
+│   │  [Player Face Portrait — 120×120px circle]   │             │
+│   │  Name · Club · Position · OVR                │             │
+│   │  [Stat 1]  [Stat 2]  [Stat 3]               │             │
+│   └──────────────────────────────────────────────┘             │
 │   [Different player rendered on every page load]                │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
@@ -125,7 +129,7 @@ The landing page of the web app. A full atmospheric stadium screen before any me
 
 ### 5.4 Player Spotlight
 - On each page load, the Flask backend selects one player at random from the full roster (76 players + Icons) and returns it via the `/api/spotlight` endpoint
-- The Vue component displays: Name, Club (in-game name), Position, OVR, and three headline stats relevant to their position
+- The Vue component displays: **Face portrait**, Name, Club (in-game name), Position, OVR, and three headline stats relevant to their position
   - GK: Reflexes, Positioning, Kicking
   - DEF: Defending, Physical, Pace
   - MID: Passing, Dribbling, Vision
@@ -136,7 +140,16 @@ The landing page of the web app. A full atmospheric stadium screen before any me
   - 75–84 → Standard card styling
 - One player per page load — does not re-roll on navigation within the SPA
 
-### 5.5 "Coming Soon" Menu Items
+### 5.5 Player Face Portrait — Spotlight Card
+- Each player card in the spotlight shows a **circular cropped portrait** (120 × 120 px) at the top of the card
+- Portrait source: `frontend/src/assets/faces/<player_id>.png` — one image file per player
+- Image rendering: `object-fit: cover`, circular clip via `border-radius: 50%`
+- **Fallback** (if image file is missing): render a CSS silhouette placeholder styled in the card's tier colour (gold / silver / standard)
+- The `/api/spotlight` response includes a `face_url` field pointing to the asset path; the Vue component binds `<img :src="player.face_url" />`
+- Portrait images are **not** in-scope for the MVP build — the UI ships with the fallback silhouette by default. Placeholder images (e.g., solid-colour circles with player initials) are acceptable for the initial release.
+- When real portrait assets are added, they drop into the assets folder with no code changes required
+
+### 5.6 "Coming Soon" Menu Items
 Career Mode and The Journey appear as disabled buttons with a `Coming Soon` badge. This communicates roadmap intent without shipping incomplete features.
 
 ---
@@ -264,20 +277,28 @@ The core product. An interactive, real-time, keyboard-controlled football match 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  Scorebar:  Red Devils United  0 - 0  Catalonia FC  00'  │
+│  [Home GK face] … [Home XI faces]   [Away XI faces]      │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
 │   [HTML5 Canvas — pitch rendered at ~800×400 px]        │
 │                                                          │
 │   Pitch markings: centre line, penalty areas, goals     │
-│   Players: coloured circles + number labels             │
+│   Players: coloured circles + face thumbnail overlay    │
 │   Ball: white circle                                    │
-│   Controlled player: highlighted ring                   │
+│   Controlled player: highlighted ring + face thumbnail  │
 │                                                          │
 ├──────────────────────────────────────────────────────────┤
 │  [↑↓←→] Move  [SPC] Pass  [Z] Shoot  [X] Sprint         │
 │  [S] Tackle  [Esc] Pause                                 │
 └──────────────────────────────────────────────────────────┘
 ```
+
+### 7.4a Player Face Rendering on Canvas
+- Each player token on the pitch is a **coloured circle (32 px diameter)**
+- If the player's face asset exists (`faces/<player_id>.png`), it is drawn **inside the circle** using `ctx.clip()` + `ctx.drawImage()` — a mini portrait clipped to the circle shape
+- **Fallback** (no image): filled circle in team colour with player number drawn in the centre
+- The controlled (human) player token gets an additional **glowing white ring** (4 px stroke) drawn around the face circle so it's always easy to spot
+- Face thumbnails are pre-loaded at match start; Canvas draws from the in-memory image cache — no per-frame network calls
 
 ### 7.5 Pitch Mechanics
 - Abstract pitch: 200 units wide × 5 rows tall (y: 0.0–4.0)
@@ -327,10 +348,10 @@ Splash → Main Menu → Watch the Play
 
 ### 8.3 Post-Match Screen
 1. **Score** (large, prominent)
-2. **Goal scorers** with minutes
+2. **Goal scorers** with minutes — each scorer's **face thumbnail (40 px circle)** shown inline next to name
 3. **Match stats** — possession bar, shots, shots on target
-4. **Player ratings** — top 5 performers from each side
-5. **Man of the Match** — highlighted callout card
+4. **Player ratings** — top 5 performers from each side, each with a **face thumbnail (40 px circle)** next to the name and rating bar
+5. **Man of the Match** — highlighted callout card with a **large face portrait (80 px circle)**, name, club, rating, and three best stats
 
 ---
 
@@ -381,6 +402,8 @@ Splash → Main Menu → Watch the Play
         │   ├── EventFeed.vue   ← Live event list (Watch the Play)
         │   ├── Scorebar.vue    ← Match header (score + time)
         │   └── PostMatch.vue   ← Full-time stats screen
+        ├── assets/
+        │   └── faces/          ← Player portrait images (<player_id>.png)
         └── composables/
             ├── useSocket.js    ← Socket.IO connection for Play the Game
             └── useMatchSim.js  ← Watch the Play simulation API calls
