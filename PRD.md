@@ -1,6 +1,6 @@
 # THE BEAUTIFUL GAME 2026
 ## Product Requirements Document (PRD)
-### MVP Release — Version 1.0
+### MVP Release — Version 1.1
 **Author:** Claude (on behalf of Ori Franklin)
 **Date:** 2026-03-17
 **Status:** DRAFT — Awaiting owner approval
@@ -106,10 +106,11 @@ Replace the current plain text main menu with a full atmospheric stadium screen.
 │                                                                 │
 │   THE BEAUTIFUL GAME 2026                                       │
 │                                                                 │
-│   1. Quick Match                                                │
-│   2. [greyed out — coming soon] Career Mode                     │
-│   3. [greyed out — coming soon] The Journey                     │
-│   4. Quit                                                       │
+│   1. Play the Game                                              │
+│   2. Watch the Play                                             │
+│   3. [greyed out — coming soon] Career Mode                     │
+│   4. [greyed out — coming soon] The Journey                     │
+│   5. Quit                                                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -322,7 +323,7 @@ Stadium Splash → Main Menu → Watch the Play
 
 ## 9. TECHNICAL ARCHITECTURE
 
-### 8.1 Stack
+### 9.1 Stack
 - **Language:** Python 3.10+
 - **Dependencies:** Standard library only (no pip installs required)
 - **Terminal:** ANSI escape codes for colour — works on macOS, Linux, Windows Terminal
