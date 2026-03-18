@@ -11,7 +11,17 @@ Controls:
   Q          Quit match
 """
 
-import curses
+try:
+    import curses
+except ImportError:
+    try:
+        import windows_curses as curses  # pip install windows-curses
+    except ImportError:
+        raise SystemExit(
+            "\n  ERROR: curses is not available.\n"
+            "  On Windows, run:  pip install windows-curses\n"
+            "  Then restart the game.\n"
+        )
 import time
 import math
 import random
