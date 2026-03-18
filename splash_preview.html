@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Beautiful Game 2026 — Splash Preview</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0a;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .app {
+    width: 1000px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── STADIUM SECTION ── */
+  .stadium-section {
+    position: relative;
+    background: linear-gradient(180deg, #0d1b2a 0%, #1a3a1a 60%, #2d6e2d 100%);
+    height: 440px;
+    overflow: hidden;
+  }
+
+  /* Sky gradient */
+  .sky {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, #1a2a4a 0%, #0d1b2a 70%);
+  }
+
+  /* Floodlights */
+  .floodlight {
+    position: absolute;
+    top: 20px;
+    width: 12px;
+    background: #ccc;
+    border-radius: 2px;
+  }
+  .floodlight::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 6px;
+    background: #ddd;
+    border-radius: 2px;
+  }
+  .floodlight-beam {
+    position: absolute;
+    top: 20px;
+    width: 120px;
+    height: 200px;
+    opacity: 0.07;
+    background: linear-gradient(180deg, #fff 0%, transparent 100%);
+    clip-path: polygon(40% 0%, 60% 0%, 100% 100%, 0% 100%);
+  }
+  .fl-left  { left: 60px;  height: 120px; }
+  .fl-right { right: 60px; height: 120px; }
+  .fl-beam-left  { left: 18px; }
+  .fl-beam-right { right: 18px; }
+
+  /* Stands */
+  .stands {
+    position: absolute;
+    bottom: 140px;
+    left: 0; right: 0;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stand-row {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  .stand-seat {
+    flex: 1;
+    border-radius: 1px;
+    animation: sway 3s ease-in-out infinite;
+    opacity: 0.85;
+  }
+  @keyframes sway {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+  }
+
+  /* Pitch */
+  .pitch {
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    height: 145px;
+    background: linear-gradient(180deg, #2d8a2d, #1e6e1e);
+  }
+  .pitch-line {
+    position: absolute;
+    background: rgba(255,255,255,0.5);
+  }
+  .touchline-top    { top: 10px; left: 40px; right: 40px; height: 2px; }
+  .touchline-bottom { bottom: 10px; left: 40px; right: 40px; height: 2px; }
+  .halfway-line     { top: 10px; bottom: 10px; left: 50%; width: 2px; }
+  .centre-circle {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px; height: 60px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 50%;
+  }
+  .penalty-left {
+    position: absolute;
+    top: 50%; left: 40px;
+    transform: translateY(-50%);
+    width: 60px; height: 70px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-left: none;
+  }
+  .penalty-right {
+    position: absolute;
+    top: 50%; right: 40px;
+    transform: translateY(-50%);
+    width: 60px; height: 70px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-right: none;
+  }
+  .goal-left {
+    position: absolute;
+    top: 50%; left: 26px;
+    transform: translateY(-50%);
+    width: 14px; height: 30px;
+    border: 2px solid rgba(255,255,255,0.7);
+    border-left: none;
+    background: rgba(255,255,255,0.05);
+  }
+  .goal-right {
+    position: absolute;
+    top: 50%; right: 26px;
+    transform: translateY(-50%);
+    width: 14px; height: 30px;
+    border: 2px solid rgba(255,255,255,0.7);
+    border-right: none;
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* Scoreboard */
+  .scoreboard {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    border: 2px solid #444;
+    border-radius: 4px;
+    padding: 6px 18px;
+    text-align: center;
+    font-size: 11px;
+    color: #ff0;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+  }
+  .scoreboard-time { font-size: 9px; color: #888; margin-top: 2px; }
+
+  /* ── PLAYER SPOTLIGHT ── */
+  .spotlight-wrap {
+    position: absolute;
+    top: 30px;
+    right: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .spotlight-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: #ffd700;
+    text-transform: uppercase;
+  }
+
+  .player-card {
+    width: 200px;
+    border-radius: 12px;
+    padding: 16px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .card-gold {
+    background: linear-gradient(160deg, #c9a227, #8b6914, #c9a227);
+    border: 1px solid #ffd700;
+  }
+  .card-silver {
+    background: linear-gradient(160deg, #9e9e9e, #616161, #9e9e9e);
+    border: 1px solid #ccc;
+  }
+  .card-standard {
+    background: linear-gradient(160deg, #1565c0, #0d47a1, #1565c0);
+    border: 1px solid #42a5f5;
+  }
+
+  /* Face portrait */
+  .face-circle {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid rgba(255,255,255,0.4);
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .face-initials {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: -1px;
+  }
+  /* SVG silhouette */
+  .face-silhouette {
+    width: 70px; height: 70px;
+    opacity: 0.45;
+  }
+
+  .card-ovr {
+    position: absolute;
+    top: 10px; left: 12px;
+    font-size: 22px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.9);
+    line-height: 1;
+  }
+  .card-pos {
+    position: absolute;
+    top: 32px; left: 14px;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 1px;
+  }
+  .card-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }
+  .card-club {
+    font-size: 9px;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .card-stats {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+    padding: 5px 8px;
+    min-width: 44px;
+  }
+  .stat-val {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+  }
+  .stat-lbl {
+    font-size: 7px;
+    color: rgba(255,255,255,0.65);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+
+  /* ── MENU SECTION ── */
+  .menu-section {
+    background: linear-gradient(180deg, #0d1117 0%, #111820 100%);
+    padding: 36px 60px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+    flex: 1;
+  }
+
+  .game-title {
+    text-align: center;
+  }
+  .game-title h1 {
+    font-size: 36px;
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    line-height: 1.1;
+  }
+  .game-title .year {
+    color: #ffd700;
+  }
+  .game-title p {
+    font-size: 11px;
+    color: #556;
+    letter-spacing: 3px;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  .menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 340px;
+  }
+
+  .btn {
+    padding: 16px 28px;
+    border-radius: 6px;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #27ae60, #1a7a40);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(39,174,96,0.35);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(39,174,96,0.5);
+  }
+  .btn-secondary {
+    background: linear-gradient(135deg, #2980b9, #1a5276);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(41,128,185,0.3);
+  }
+  .btn-secondary:hover {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    transform: translateY(-2px);
+  }
+  .btn-disabled {
+    background: #1a1a1a;
+    color: #444;
+    border: 1px solid #2a2a2a;
+    cursor: not-allowed;
+  }
+  .coming-soon-badge {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 8px;
+    letter-spacing: 1px;
+    background: #2a2a2a;
+    color: #666;
+    border-radius: 4px;
+    padding: 3px 7px;
+    text-transform: uppercase;
+  }
+
+  /* ── SEAT COLOURS ── */
+  .c1 { background: #b71c1c; }
+  .c2 { background: #c62828; }
+  .c3 { background: #d32f2f; }
+  .c4 { background: #e53935; }
+  .c5 { background: #1565c0; }
+  .c6 { background: #1976d2; }
+  .c7 { background: #c62828; }
+  .c8 { background: #b71c1c; }
+  .c9 { background: #0d47a1; }
+  .c10{ background: #283593; }
+
+  /* staggered sway delays */
+  .stand-seat:nth-child(3n)   { animation-delay: 0.2s; }
+  .stand-seat:nth-child(3n+1) { animation-delay: 0.5s; }
+  .stand-seat:nth-child(3n+2) { animation-delay: 0.9s; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── STADIUM HERO ── -->
+  <div class="stadium-section">
+    <div class="sky"></div>
+
+    <!-- Floodlights -->
+    <div class="floodlight fl-left"></div>
+    <div class="floodlight fl-right"></div>
+    <div class="floodlight-beam fl-beam-left"></div>
+    <div class="floodlight-beam fl-beam-right"></div>
+
+    <!-- Scoreboard -->
+    <div class="scoreboard">
+      00 — 00
+      <div class="scoreboard-time">00:00</div>
+    </div>
+
+    <!-- Stands (generated via JS) -->
+    <div class="stands" id="stands"></div>
+
+    <!-- Pitch -->
+    <div class="pitch">
+      <div class="pitch-line touchline-top"></div>
+      <div class="pitch-line touchline-bottom"></div>
+      <div class="pitch-line halfway-line"></div>
+      <div class="centre-circle"></div>
+      <div class="penalty-left"></div>
+      <div class="penalty-right"></div>
+      <div class="goal-left"></div>
+      <div class="goal-right"></div>
+    </div>
+
+    <!-- Player Spotlight Card -->
+    <div class="spotlight-wrap">
+      <div class="spotlight-label">★ Player Spotlight ★</div>
+      <div class="player-card card-gold">
+        <div class="card-ovr">91</div>
+        <div class="card-pos">ATT</div>
+
+        <!-- Face portrait — initials fallback -->
+        <div class="face-circle">
+          <!-- When a real image exists: <img src="assets/faces/mbappe.png" style="width:100%;height:100%;object-fit:cover;"> -->
+          <svg class="face-silhouette" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="28" r="18" fill="rgba(255,255,255,0.6)"/>
+            <ellipse cx="40" cy="72" rx="26" ry="20" fill="rgba(255,255,255,0.6)"/>
+          </svg>
+        </div>
+
+        <div class="card-name">K. Mbappé</div>
+        <div class="card-club">Parisians FC</div>
+        <div class="card-stats">
+          <div class="stat-box"><span class="stat-val">95</span><span class="stat-lbl">Shot</span></div>
+          <div class="stat-box"><span class="stat-val">97</span><span class="stat-lbl">Pace</span></div>
+          <div class="stat-box"><span class="stat-val">92</span><span class="stat-lbl">Drib</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN MENU ── -->
+  <div class="menu-section">
+    <div class="game-title">
+      <h1>The Beautiful Game <span class="year">2026</span></h1>
+      <p>Choose your game mode</p>
+    </div>
+    <div class="menu-buttons">
+      <button class="btn btn-primary">▶&nbsp; Play the Game</button>
+      <button class="btn btn-secondary">◉&nbsp; Watch the Play</button>
+      <button class="btn btn-disabled">
+        Career Mode
+        <span class="coming-soon-badge">Coming Soon</span>
+      </button>
+      <button class="btn btn-disabled">
+        The Journey
+        <span class="coming-soon-badge">Coming Soon</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Generate crowd stands procedurally
+  const colors = ['c1','c2','c3','c4','c5','c6','c7','c8','c9','c10'];
+  const stands = document.getElementById('stands');
+  for (let r = 0; r < 5; r++) {
+    const row = document.createElement('div');
+    row.className = 'stand-row';
+    const seatsPerRow = 120;
+    for (let s = 0; s < seatsPerRow; s++) {
+      const seat = document.createElement('div');
+      // roughly replicate a stadium colour pattern (red/blue blocks)
+      const pick = Math.random();
+      let cls;
+      if (pick < 0.55) cls = colors[Math.floor(Math.random() * 4)];      // reds
+      else if (pick < 0.8) cls = colors[4 + Math.floor(Math.random()*3)]; // blues
+      else cls = 'c10'; // dark filler
+      seat.className = `stand-seat ${cls}`;
+      row.appendChild(seat);
+    }
+    stands.appendChild(row);
+  }
+</script>
+
+</body>
+</html>
