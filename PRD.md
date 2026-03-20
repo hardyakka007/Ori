@@ -32,6 +32,7 @@ A **web-based** football simulation game built for football fans who want the *f
 | 9 | **Leagues** | Full season table per division — standings, GD, fixtures, end-of-season awards. |
 | 10 | **Save / Load** | Persistent state for Career Mode and TBG Pack System via localStorage. |
 | 11 | **Mobile Controls** | Touch D-pad + action buttons for Play the Game on mobile. |
+| 12 | **Footy Street** | 5v5 street football on a compact pitch. Wall bounces, no offsides, faster pace. |
 
 ---
 
@@ -326,9 +327,34 @@ All 5 in-game leagues (Premier Division, Primera División, German Top Flight, I
 
 ---
 
-## 14. TECHNICAL ARCHITECTURE
+## 14. FEATURE SPEC: FOOTY STREET
 
-### 14.1 Stack
+### Purpose
+Fast-paced 5v5 street football on a compact pitch. The vibe is freestyle, urban, skillful. Think cage football or futsal.
+
+### Rules
+- 5 players per side (including goalkeeper)
+- Compact pitch: 60×40 game units
+- Walls are in play (ball bounces off all 4 sides)
+- No offsides
+- Match length: 2 real minutes = 60 game minutes
+- First to 3 goals wins (golden goal in case of draw at full time)
+- Touch controls supported
+
+### Controls
+Same as Play the Game (arrow keys, Space=pass, Z=shoot, X=sprint, S=tackle)
+
+### Team Selection
+Pick any club — 5 best players by OVR are selected automatically. Goalkeeper included.
+
+### Pitch Layout
+Smaller canvas (700×300), darker surface (grey/asphalt tone), orange ball, different player colours.
+
+---
+
+## 15. TECHNICAL ARCHITECTURE
+
+### 15.1 Stack
 
 | Layer | Technology |
 |---|---|
@@ -339,7 +365,7 @@ All 5 in-game leagues (Premier Division, Primera División, German Top Flight, I
 | Data | Static Python modules (no database) |
 | Persistence | localStorage (client-side) + JSON files in `/saves/` |
 
-### 14.2 File Structure
+### 15.2 File Structure
 ```
 /
 ├── app.py
@@ -376,7 +402,7 @@ All 5 in-game leagues (Premier Division, Primera División, German Top Flight, I
         └── TouchControls.vue ← NEW
 ```
 
-### 14.3 API Endpoints (complete)
+### 15.3 API Endpoints (complete)
 
 | Method | Path | Description |
 |---|---|---|
@@ -393,7 +419,7 @@ All 5 in-game leagues (Premier Division, Primera División, German Top Flight, I
 | GET | `/api/teams/:club` | Squad data for Play the Game |
 | WS | `socket.io` | Real-time game state |
 
-### 14.4 Save / Load Strategy
+### 15.4 Save / Load Strategy
 - Career Mode → `localStorage['tbg_career']`
 - TBG Pack System → `localStorage['tbg_ultimate_team']`
 - Journey progress → `localStorage['tbg_journey']`
@@ -401,7 +427,7 @@ All 5 in-game leagues (Premier Division, Primera División, German Top Flight, I
 
 ---
 
-## 15. NON-FUNCTIONAL REQUIREMENTS
+## 16. NON-FUNCTIONAL REQUIREMENTS
 
 | Requirement | Target |
 |---|---|
@@ -417,7 +443,7 @@ All 5 in-game leagues (Premier Division, Primera División, German Top Flight, I
 
 ---
 
-## 16. SUCCESS CRITERIA
+## 17. SUCCESS CRITERIA
 
 The game is complete when:
 
@@ -473,7 +499,7 @@ The game is complete when:
 
 ---
 
-## 17. RESOLVED QUESTIONS
+## 18. RESOLVED QUESTIONS
 
 | # | Question | Answer |
 |---|---|---|

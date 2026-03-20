@@ -29,20 +29,14 @@
       <!-- Pitch -->
       <div class="pitch">
         <svg class="pitch-svg" viewBox="0 0 800 160" preserveAspectRatio="none">
-          <!-- Touchlines -->
           <rect x="30" y="8" width="740" height="144" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
-          <!-- Halfway line -->
           <line x1="400" y1="8" x2="400" y2="152" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
-          <!-- Centre circle -->
           <circle cx="400" cy="80" r="40" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
           <circle cx="400" cy="80" r="3" fill="rgba(255,255,255,.5)"/>
-          <!-- Home penalty area -->
           <rect x="30" y="42" width="90" height="76" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
           <rect x="30" y="58" width="44" height="44" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
-          <!-- Away penalty area -->
           <rect x="680" y="42" width="90" height="76" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
           <rect x="726" y="58" width="44" height="44" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>
-          <!-- Goals -->
           <rect x="10" y="62" width="20" height="36" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>
           <rect x="770" y="62" width="20" height="36" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.6)" stroke-width="1.5"/>
         </svg>
@@ -67,16 +61,14 @@
       </div>
 
       <nav class="menu-buttons">
-        <button class="btn btn-primary" @click="goPlay">▶ &nbsp;Play the Game</button>
-        <button class="btn btn-secondary" @click="goWatch">◉ &nbsp;Watch the Play</button>
-        <button class="btn btn-disabled" disabled>
-          Career Mode
-          <span class="badge">Coming Soon</span>
-        </button>
-        <button class="btn btn-disabled" disabled>
-          The Journey
-          <span class="badge">Coming Soon</span>
-        </button>
+        <button class="btn btn-primary"   @click="go('/play')">▶ &nbsp;Play the Game</button>
+        <button class="btn btn-secondary" @click="go('/watch')">◉ &nbsp;Watch the Play</button>
+        <button class="btn btn-mode"      @click="go('/career')">🏆 &nbsp;Career Mode</button>
+        <button class="btn btn-mode"      @click="go('/journey')">📖 &nbsp;The Journey</button>
+        <button class="btn btn-mode"      @click="go('/ultimate')">⭐ &nbsp;TBG Pack System</button>
+        <button class="btn btn-mode"      @click="go('/players')">🔍 &nbsp;Player Database</button>
+        <button class="btn btn-mode"      @click="go('/league')">📊 &nbsp;Leagues</button>
+        <button class="btn btn-street"    @click="go('/street')">🏙️ &nbsp;Footy Street</button>
       </nav>
     </div>
 
@@ -96,9 +88,7 @@ async function fetchSpotlight() {
   try {
     const res = await fetch('/api/spotlight')
     spotlightPlayer.value = await res.json()
-  } catch {
-    // silently fail — card stays as loading
-  }
+  } catch { /* silently fail */ }
 }
 
 function buildCrowd() {
@@ -129,8 +119,7 @@ onMounted(() => {
   buildCrowd()
 })
 
-function goPlay()  { router.push('/play') }
-function goWatch() { router.push('/watch') }
+function go(path) { router.push(path) }
 </script>
 
 <style scoped>
@@ -147,9 +136,8 @@ function goWatch() { router.push('/watch') }
   height: 460px;
   background: linear-gradient(180deg, #0d1b2a 0%, #1a3a1a 65%, #2d6e2d 100%);
   overflow: hidden;
-  min-width: 900px;
+  min-width: 360px;
 }
-
 .sky {
   position: absolute;
   inset: 0;
@@ -163,10 +151,8 @@ function goWatch() { router.push('/watch') }
 .fl-pole  { width: 8px; height: 100px; background: #aaa; border-radius: 2px; }
 .fl-head  { width: 56px; height: 8px; background: #ccc; border-radius: 2px; margin-top: -2px; }
 .fl-beam  {
-  position: absolute;
-  top: 100px;
-  width: 130px;
-  height: 220px;
+  position: absolute; top: 100px;
+  width: 130px; height: 220px;
   background: linear-gradient(180deg, rgba(255,255,200,.09) 0%, transparent 100%);
   clip-path: polygon(38% 0%, 62% 0%, 100% 100%, 0% 100%);
 }
@@ -174,151 +160,78 @@ function goWatch() { router.push('/watch') }
 
 /* Scoreboard */
 .scoreboard {
-  position: absolute;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 2px solid #444;
-  border-radius: 4px;
-  padding: 5px 18px;
-  text-align: center;
-  z-index: 2;
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  background: #111; border: 2px solid #444; border-radius: 4px;
+  padding: 5px 18px; text-align: center; z-index: 2;
 }
 .sb-score { display: block; font-size: 13px; color: #ff0; font-family: 'Courier New', monospace; letter-spacing: 3px; }
 .sb-time  { display: block; font-size: 9px; color: #888; margin-top: 1px; letter-spacing: 2px; }
 
 /* Stands */
 .stands {
-  position: absolute;
-  bottom: 148px;
-  left: 0; right: 0;
-  height: 120px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 1;
+  position: absolute; bottom: 148px; left: 0; right: 0; height: 120px;
+  display: flex; flex-direction: column; gap: 2px; z-index: 1;
 }
 .stand-row   { display: flex; flex: 1; overflow: hidden; }
-.stand-seat  {
-  flex: 1;
-  border-radius: 1px;
-  animation: sway 3s ease-in-out infinite;
-  opacity: 0.88;
-}
-@keyframes sway {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-2px); }
-}
+.stand-seat  { flex: 1; border-radius: 1px; animation: sway 3s ease-in-out infinite; opacity: 0.88; }
+@keyframes sway { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
 
 /* Pitch */
-.pitch {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 152px;
-  background: linear-gradient(180deg, #2d8a2d, #1e6e1e);
-}
+.pitch { position: absolute; bottom: 0; left: 0; right: 0; height: 152px; background: linear-gradient(180deg, #2d8a2d, #1e6e1e); }
 .pitch-svg { width: 100%; height: 100%; }
 
 /* Spotlight */
 .spotlight-wrap {
-  position: absolute;
-  top: 28px;
-  right: 60px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  z-index: 3;
+  position: absolute; top: 28px; right: 60px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 3;
 }
-.spotlight-label {
-  font-size: 10px;
-  letter-spacing: 3px;
-  color: #ffd700;
-  text-transform: uppercase;
-}
-.card-loading {
-  color: #555;
-  font-size: 12px;
-  padding: 40px;
-}
+.spotlight-label { font-size: 10px; letter-spacing: 3px; color: #ffd700; text-transform: uppercase; }
+.card-loading { color: #555; font-size: 12px; padding: 40px; }
 
 /* ── MENU ── */
 .menu {
   flex: 1;
   background: linear-gradient(180deg, #0d1117 0%, #111820 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
-  padding: 36px 60px 48px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 24px; padding: 36px 60px 48px;
 }
-
 .title { text-align: center; }
-.title h1 {
-  font-size: 34px;
-  font-weight: 900;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 4px;
-}
+.title h1 { font-size: 34px; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 4px; }
 .year { color: #ffd700; }
-.subtitle {
-  font-size: 11px;
-  color: #556;
-  letter-spacing: 3px;
-  margin-top: 5px;
-  text-transform: uppercase;
-}
+.subtitle { font-size: 11px; color: #556; letter-spacing: 3px; margin-top: 5px; text-transform: uppercase; }
 
-.menu-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 340px;
-}
+.menu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 680px; max-width: 100%; }
 
 .btn {
-  padding: 16px 28px;
-  border-radius: 6px;
-  border: none;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  position: relative;
-  transition: transform .12s ease, box-shadow .12s ease;
+  padding: 15px 20px; border-radius: 6px; border: none;
+  font-size: 14px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer; position: relative;
+  transition: transform .12s ease, box-shadow .12s ease; text-align: left;
 }
 .btn-primary {
-  background: linear-gradient(135deg, #27ae60, #1a7a40);
-  color: #fff;
-  box-shadow: 0 4px 20px rgba(39,174,96,.35);
+  background: linear-gradient(135deg, #27ae60, #1a7a40); color: #fff;
+  box-shadow: 0 4px 20px rgba(39,174,96,.35); grid-column: span 1;
 }
 .btn-primary:hover  { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(39,174,96,.5); }
 .btn-secondary {
-  background: linear-gradient(135deg, #2980b9, #1a5276);
-  color: #fff;
+  background: linear-gradient(135deg, #2980b9, #1a5276); color: #fff;
   box-shadow: 0 4px 20px rgba(41,128,185,.3);
 }
 .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(41,128,185,.45); }
-.btn-disabled {
-  background: #1a1a1a;
-  color: #444;
-  border: 1px solid #2a2a2a;
-  cursor: not-allowed;
+.btn-mode {
+  background: #111820; color: #ccc; border: 1px solid #1e2535;
 }
-.badge {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 8px;
-  letter-spacing: 1px;
-  background: #2a2a2a;
-  color: #666;
-  border-radius: 4px;
-  padding: 3px 7px;
-  text-transform: uppercase;
+.btn-mode:hover { background: #1a2535; border-color: #2e4060; color: #fff; transform: translateY(-1px); }
+.btn-street {
+  background: linear-gradient(135deg, #e67e22, #c0392b); color: #fff;
+  box-shadow: 0 4px 18px rgba(230,126,34,.3); grid-column: span 2;
+}
+.btn-street:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(230,126,34,.45); }
+
+@media (max-width: 720px) {
+  .menu-buttons { grid-template-columns: 1fr; width: 100%; padding: 0 20px; }
+  .btn-street { grid-column: span 1; }
+  .stadium { min-width: 360px; }
+  .spotlight-wrap { display: none; }
 }
 </style>

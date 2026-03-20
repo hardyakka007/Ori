@@ -83,6 +83,78 @@
         <span><kbd>X</kbd> Sprint</span>
         <span><kbd>S</kbd> Tackle</span>
         <span><kbd>Esc</kbd> Pause</span>
+        <button class="touch-toggle-btn" @click="showTouchControls = !showTouchControls">
+          {{ showTouchControls ? 'Hide' : 'Touch' }} Controls
+        </button>
+      </div>
+
+      <!-- Touch Controls -->
+      <div v-if="showTouchControls || isMobile" class="touch-controls">
+        <!-- D-pad -->
+        <div class="touch-dpad">
+          <div class="dpad-row">
+            <button
+              class="touch-btn dpad-up"
+              @touchstart.prevent="touchStart('up')" @touchend.prevent="touchEnd('up')"
+              @click="touchStart('up')"
+            >↑</button>
+          </div>
+          <div class="dpad-row">
+            <button
+              class="touch-btn dpad-left"
+              @touchstart.prevent="touchStart('left')" @touchend.prevent="touchEnd('left')"
+              @click="touchStart('left')"
+            >←</button>
+            <button class="touch-btn dpad-center" disabled>·</button>
+            <button
+              class="touch-btn dpad-right"
+              @touchstart.prevent="touchStart('right')" @touchend.prevent="touchEnd('right')"
+              @click="touchStart('right')"
+            >→</button>
+          </div>
+          <div class="dpad-row">
+            <button
+              class="touch-btn dpad-down"
+              @touchstart.prevent="touchStart('down')" @touchend.prevent="touchEnd('down')"
+              @click="touchStart('down')"
+            >↓</button>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="touch-actions">
+          <div class="action-row">
+            <button
+              class="touch-btn action-pass"
+              @touchstart.prevent="touchStart('space')" @touchend.prevent="touchEnd('space')"
+              @click="touchStart('space')"
+            >PASS</button>
+            <button
+              class="touch-btn action-shoot"
+              @touchstart.prevent="touchStart('z')" @touchend.prevent="touchEnd('z')"
+              @click="touchStart('z')"
+            >SHOOT</button>
+          </div>
+          <div class="action-row">
+            <button
+              class="touch-btn action-sprint"
+              @touchstart.prevent="touchStart('x')" @touchend.prevent="touchEnd('x')"
+              @click="touchStart('x')"
+            >SPRINT</button>
+            <button
+              class="touch-btn action-tackle"
+              @touchstart.prevent="touchStart('s')" @touchend.prevent="touchEnd('s')"
+              @click="touchStart('s')"
+            >TACKLE</button>
+          </div>
+          <div class="action-row">
+            <button
+              class="touch-btn action-pause"
+              @touchstart.prevent="touchStart('escape')" @touchend.prevent="touchEnd('escape')"
+              @click="touchStart('escape')"
+            >PAUSE</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -108,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -178,6 +250,9 @@ let goalFlash = 0
 
 const keys = { up: false, down: false, left: false, right: false, space: false, z: false, x: false, s: false }
 const keyLatch = { space: false, z: false, s: false }
+
+const showTouchControls = ref(false)
+const isMobile = computed(() => window.innerWidth <= 900)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function dist2(a, b) { return (a.x-b.x)**2 + (a.y-b.y)**2 }
@@ -297,6 +372,22 @@ function onKeyUp(e) {
     case 'KeyX':       keys.x = false; break
     case 'KeyS':       keys.s = false; keyLatch.s = false; break
   }
+}
+
+// ── Touch Controls ────────────────────────────────────────────────────────────
+function touchStart(key) {
+  keys[key] = true
+  if (key === 'space' && !keyLatch.space) { keyLatch.space = true }
+  if (key === 'z' && !keyLatch.z) { keyLatch.z = true }
+  if (key === 's' && !keyLatch.s) { keyLatch.s = true }
+  if (key === 'escape') { togglePause() }
+}
+function touchEnd(key) {
+  if (key === 'escape') return
+  keys[key] = false
+  if (key === 'space') { keyLatch.space = false }
+  if (key === 'z') { keyLatch.z = false }
+  if (key === 's') { keyLatch.s = false }
 }
 
 onMounted(() => {
