@@ -1025,6 +1025,62 @@ kbd {
   border-radius: 3px; padding: 2px 5px; font-size: 11px; color: #aaa;
 }
 
+/* Touch Controls toggle button */
+.touch-toggle-btn {
+  background: #1e2535; border: 1px solid #2e4060; color: #aaa;
+  border-radius: 4px; padding: 3px 10px; font-size: 11px; cursor: pointer;
+  transition: background .12s;
+}
+.touch-toggle-btn:hover { background: #253045; color: #ccc; }
+
+/* Touch controls layout */
+.touch-controls {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  width: 100%; max-width: 900px;
+  padding: 12px 24px 16px;
+  background: #111820;
+  border-top: 1px solid #1e2535;
+  box-sizing: border-box;
+}
+
+.touch-dpad {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.dpad-row {
+  display: flex; gap: 4px; align-items: center; justify-content: center;
+}
+
+.touch-actions {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+}
+.action-row {
+  display: flex; gap: 8px;
+}
+
+.touch-btn {
+  min-width: 60px; min-height: 60px;
+  background: #1e2535; border: 1px solid #2e4060;
+  color: #fff; border-radius: 8px;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  user-select: none; -webkit-user-select: none;
+  transition: background .08s;
+  padding: 0;
+}
+.touch-btn:active, .touch-btn:focus {
+  background: #2e4a70; outline: none;
+}
+.dpad-center {
+  background: transparent; border-color: transparent; color: #333;
+  cursor: default; pointer-events: none;
+}
+.action-pause { min-width: 128px; }
+
+/* On screens wider than 900px, hide touch controls unless showTouchControls is active */
+@media (min-width: 901px) {
+  .touch-controls { display: flex; }
+}
+
 /* ── FULL TIME ── */
 .ft-screen { justify-content: center; }
 .ft-card {
