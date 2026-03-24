@@ -9,6 +9,11 @@
         <p>5v5 street football • First to 3 goals wins</p>
       </header>
 
+      <div class="mode-tabs">
+        <button class="mode-tab" :class="{ active: selectTab === 'quick' }" @click="selectTab = 'quick'">Quick Match</button>
+        <button class="mode-tab" :class="{ active: selectTab === 'story' }" @click="enterStoryMode">Story Mode</button>
+      </div>
+
       <div class="team-pickers">
         <div class="picker-col">
           <h2 class="picker-title">🎮 Your Team</h2>
@@ -73,6 +78,11 @@
             <button v-if="overlay.btn" class="overlay-btn" @click="overlay.action">{{ overlay.btn }}</button>
           </div>
         </div>
+      </div>
+
+      <!-- Story chapter badge (shown during story match) -->
+      <div v-if="storyMatchActive && currentStoryChapter" class="story-match-badge">
+        Ch.{{ currentStoryChapter.number }} · {{ currentStoryChapter.city }} · vs {{ currentStoryChapter.opponent_label }}
       </div>
 
       <!-- Controls -->
@@ -152,6 +162,169 @@
               @click="touchStart('escape')"
             >PAUSE</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STORY MODE ENTRY (inside select screen) ── -->
+
+    <!-- ── CHARACTER CREATION ── -->
+    <div v-else-if="phase === 'story-create'" class="screen story-create-screen">
+      <div class="create-card">
+        <button class="back-btn" @click="phase = 'select'">← Back</button>
+        <div class="create-icon">⚽</div>
+        <h2 class="create-title">Name Your Player</h2>
+        <p class="create-sub">You're stepping onto a synthetic pitch in Modi'in, Israel.<br>Who are you?</p>
+        <input
+          v-model="playerName"
+          class="name-input"
+          type="text"
+          placeholder="Enter your name"
+          maxlength="22"
+          @keydown.enter="startStory"
+        />
+        <div class="create-rival-label">Who do you face at the final?</div>
+        <div class="create-rival-choices">
+          <button
+            class="create-rival-btn"
+            :class="{ active: pendingRival === 'crew' }"
+            @click="pendingRival = 'crew'"
+          >
+            <span class="crb-icon">👥</span>
+            <span class="crb-title">The Crew</span>
+            <span class="crb-desc">A whole team that humiliated you. Final = group rematch.</span>
+          </button>
+          <button
+            class="create-rival-btn"
+            :class="{ active: pendingRival === 'rival' }"
+            @click="pendingRival = 'rival'"
+          >
+            <span class="crb-icon">⚡</span>
+            <span class="crb-title">The Rival</span>
+            <span class="crb-desc">One player always better than you. Final = 5v5 showdown.</span>
+          </button>
+        </div>
+        <button
+          class="kickoff-btn"
+          :disabled="!playerName.trim() || !pendingRival"
+          @click="startStory"
+          style="margin-top:24px"
+        >
+          Begin Story →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STORY HUB ── -->
+    <div v-else-if="phase === 'story-hub'" class="screen story-hub-screen">
+      <header class="screen-header">
+        <button class="back-btn" @click="phase = 'select'">← Back</button>
+        <h1>The Road to Street Crowns</h1>
+        <p v-if="playerName">{{ playerName }} · 7 cities · 7 matches</p>
+        <p v-else>7 cities · 7 matches · one story</p>
+      </header>
+      <div class="story-hub-body">
+        <div class="chapter-map">
+          <div
+            v-for="ch in storyChapters" :key="ch.number"
+            class="story-ch-row"
+            :class="{
+              'ch-completed': storyProgress.completed.includes(ch.number),
+              'ch-current':   ch.number === storyProgress.currentChapter && !storyProgress.completed.includes(ch.number),
+              'ch-locked':    ch.number > storyProgress.currentChapter,
+            }"
+            @click="ch.number <= storyProgress.currentChapter && openStoryChapter(ch.number)"
+          >
+            <div class="ch-num-badge">{{ ch.number }}</div>
+            <div class="ch-body">
+              <div class="ch-city-line">{{ ch.city }}<span v-if="ch.country" class="ch-country"> · {{ ch.country }}</span></div>
+              <div class="ch-title-line">{{ ch.title }}</div>
+              <div class="ch-loc-line">{{ ch.location_detail }}</div>
+            </div>
+            <div class="ch-status-icon">
+              <span v-if="storyProgress.completed.includes(ch.number)">✅</span>
+              <span v-else-if="ch.number === storyProgress.currentChapter">▶</span>
+              <span v-else>🔒</span>
+            </div>
+          </div>
+        </div>
+        <div class="story-hub-footer">
+          <div class="story-progress-bar">
+            <div class="spb-fill" :style="{ width: (storyProgress.completed.length / 7 * 100) + '%' }"></div>
+          </div>
+          <div class="story-progress-label">{{ storyProgress.completed.length }} / 7 chapters complete</div>
+          <button v-if="storyProgress.completed.length > 0" class="reset-btn" @click="resetStory">Reset Story</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STORY CHAPTER INTRO ── -->
+    <div v-else-if="phase === 'story-intro' && currentStoryChapter" class="screen story-intro-screen">
+      <div class="story-intro-card">
+        <div class="si-header">
+          <button class="back-btn" @click="phase = 'story-hub'">← Map</button>
+          <div class="si-chapter-label">Chapter {{ currentStoryChapter.number }} · {{ currentStoryChapter.city }}</div>
+        </div>
+        <h2 class="si-title">{{ currentStoryChapter.title }}</h2>
+        <div class="si-location">📍 {{ currentStoryChapter.location_detail }}</div>
+        <div class="si-narrative" v-html="storyIntroFormatted"></div>
+        <div class="si-objective">
+          <span class="obj-icon">🎯</span>
+          <span class="obj-text">{{ currentStoryChapter.objective }}</span>
+        </div>
+        <div class="si-versus">
+          <span class="si-vs-you">{{ playerName || 'Your Crew' }}</span>
+          <span class="si-vs-badge">VS</span>
+          <span class="si-vs-them">{{ currentStoryChapter.opponent_label }}</span>
+        </div>
+        <div class="si-actions">
+          <button class="kickoff-btn" @click="playStoryMatch">Play Match ⚽</button>
+          <button class="sim-btn" @click="simulateStoryChapter">Simulate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STORY POST-MATCH ── -->
+    <div v-else-if="phase === 'story-post' && currentStoryChapter" class="screen story-post-screen">
+      <div class="story-post-card">
+        <div class="spc-result" :class="storyMatchWon ? 'spc-win' : 'spc-loss'">
+          {{ storyMatchWon ? 'Victory' : 'Defeat' }}
+        </div>
+        <div class="spc-score">{{ homeScore }} – {{ awayScore }}</div>
+        <div class="spc-city">{{ currentStoryChapter.city }}</div>
+        <div class="spc-narrative" v-html="storyPostNarrative"></div>
+        <div class="spc-actions">
+          <button
+            v-if="storyMatchWon && !currentStoryChapter.is_last"
+            class="kickoff-btn"
+            @click="continueStory"
+          >Next Chapter →</button>
+          <button
+            v-if="storyMatchWon && currentStoryChapter.is_last"
+            class="kickoff-btn"
+            @click="phase = 'story-end'"
+          >Final Screen →</button>
+          <button v-if="!storyMatchWon" class="kickoff-btn" @click="retryStory">
+            Retry Match
+          </button>
+          <button v-if="!storyMatchWon" class="sim-btn" @click="continueStory">
+            Continue Anyway
+          </button>
+          <button class="back-btn" @click="phase = 'story-hub'" style="margin-top:12px">← Back to Map</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STORY COMPLETE ── -->
+    <div v-else-if="phase === 'story-end'" class="screen story-end-screen">
+      <div class="story-end-card">
+        <div class="sec-trophy">🏆</div>
+        <h2 class="sec-title">Street Crown</h2>
+        <p class="sec-sub">Modi'in to the World Final.<br>Seven cities. One story.</p>
+        <div class="sec-name">{{ playerName || 'Street Legend' }}. Street Crown Champion.</div>
+        <div class="sec-actions">
+          <button class="kickoff-btn" @click="resetStory">Play Again</button>
+          <button class="back-btn" style="margin-top:12px" @click="goHome">Back to Menu</button>
         </div>
       </div>
     </div>
@@ -247,6 +420,184 @@ const keyLatch = { space: false, z: false, s: false }
 
 const showTouchControls = ref(false)
 const isMobile = computed(() => window.innerWidth <= 900)
+
+// ── Story Mode State ───────────────────────────────────────────────────────────
+const selectTab = ref('quick')
+const storyChapters = ref([])
+const currentStoryChapter = ref(null)
+const storyMatchActive = ref(false)
+const storyMatchWon = ref(false)
+const storyPostNarrative = ref('')
+
+// Load saved progress immediately
+const _savedProgress = (() => {
+  try {
+    const raw = localStorage.getItem('tbg_street_story')
+    if (raw) return JSON.parse(raw)
+  } catch { /* ignore */ }
+  return { completed: [], currentChapter: 1, rivalType: '', playerName: '' }
+})()
+
+const storyProgress  = ref(_savedProgress)
+const storyRivalType = ref(_savedProgress.rivalType || '')
+const playerName     = ref(_savedProgress.playerName || '')
+const pendingRival   = ref('')
+
+function _saveStoryProgress() {
+  localStorage.setItem('tbg_street_story', JSON.stringify({
+    completed:      storyProgress.value.completed,
+    currentChapter: storyProgress.value.currentChapter,
+    rivalType:      storyRivalType.value,
+    playerName:     playerName.value,
+  }))
+}
+
+const storyIntroFormatted = computed(() => {
+  if (!currentStoryChapter.value) return ''
+  return currentStoryChapter.value.intro
+    .split('\n\n')
+    .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+    .join('')
+})
+
+// ── Story Mode Functions ───────────────────────────────────────────────────────
+
+async function enterStoryMode() {
+  // If no player name yet, go to character creation
+  if (!playerName.value || !storyRivalType.value) {
+    pendingRival.value = storyRivalType.value || ''
+    phase.value = 'story-create'
+    return
+  }
+  await _loadStoryChapters()
+  phase.value = 'story-hub'
+}
+
+async function startStory() {
+  if (!playerName.value.trim() || !pendingRival.value) return
+  storyRivalType.value = pendingRival.value
+  storyProgress.value.rivalType = pendingRival.value
+  storyProgress.value.playerName = playerName.value.trim()
+  _saveStoryProgress()
+  await _loadStoryChapters()
+  phase.value = 'story-hub'
+}
+
+async function _loadStoryChapters() {
+  try {
+    const res = await fetch(`/api/street-story/chapters?rival=${storyRivalType.value}`)
+    storyChapters.value = await res.json()
+  } catch { /* show hub anyway with empty list */ }
+}
+
+async function openStoryChapter(n) {
+  try {
+    const res = await fetch(`/api/street-story/chapter/${n}?rival=${storyRivalType.value}`)
+    currentStoryChapter.value = await res.json()
+  } catch { return }
+  phase.value = 'story-intro'
+}
+
+function setRivalType(type) {
+  storyRivalType.value = type
+  storyProgress.value.rivalType = type
+  _saveStoryProgress()
+  openStoryChapter(4)
+}
+
+async function playStoryMatch() {
+  if (!currentStoryChapter.value) return
+  storyMatchActive.value = true
+  const ch = currentStoryChapter.value
+  try {
+    const [homeRes, awayRes] = await Promise.all([
+      fetch('/api/teams/Hotspur%20FC'),
+      fetch(`/api/teams/${encodeURIComponent(ch.opponent_club)}`),
+    ])
+    const homeData = await homeRes.json()
+    const awayData = await awayRes.json()
+    homeName.value = playerName.value || 'Your Crew'
+    awayName.value = ch.opponent_label
+    const homeTop = homeData.players.slice(0, 5)
+    const awayTop = awayData.players.slice(0, 5)
+    initGame(homeTop, awayTop)
+  } catch {
+    alert('Could not load team data — is the backend running?')
+    storyMatchActive.value = false
+  }
+}
+
+async function simulateStoryChapter() {
+  if (!currentStoryChapter.value) return
+  try {
+    const res = await fetch('/api/street-story/simulate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chapter: currentStoryChapter.value.number,
+        rival: storyRivalType.value,
+      }),
+    })
+    const data = await res.json()
+    homeScore.value = data.match?.score?.home ?? (data.won ? 3 : 1)
+    awayScore.value = data.match?.score?.away ?? (data.won ? 1 : 3)
+    storyMatchWon.value = data.won
+    storyPostNarrative.value = _formatNarrative(data.narrative)
+    if (data.won) _markChapterComplete(currentStoryChapter.value.number)
+    phase.value = 'story-post'
+  } catch {
+    alert('Simulation failed — is the backend running?')
+  }
+}
+
+function showStoryPost(won) {
+  const ch = currentStoryChapter.value
+  storyMatchWon.value = won
+  const rawNarrative = won ? ch.post_win : ch.post_loss
+  storyPostNarrative.value = _formatNarrative(rawNarrative)
+  if (won) _markChapterComplete(ch.number)
+  phase.value = 'story-post'
+}
+
+function _formatNarrative(text) {
+  return text
+    .split('\n\n')
+    .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+    .join('')
+}
+
+function _markChapterComplete(n) {
+  if (!storyProgress.value.completed.includes(n)) {
+    storyProgress.value.completed.push(n)
+  }
+  if (storyProgress.value.currentChapter <= n) {
+    storyProgress.value.currentChapter = n + 1
+  }
+  _saveStoryProgress()
+}
+
+function continueStory() {
+  const next = currentStoryChapter.value.number + 1
+  if (next > 7) {
+    phase.value = 'story-end'
+  } else {
+    openStoryChapter(next)
+  }
+}
+
+function retryStory() {
+  phase.value = 'story-intro'
+}
+
+async function resetStory() {
+  storyProgress.value = { completed: [], currentChapter: 1, rivalType: '', playerName: '' }
+  storyRivalType.value = ''
+  playerName.value = ''
+  pendingRival.value = ''
+  _saveStoryProgress()
+  pendingRival.value = ''
+  phase.value = 'story-create'
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function dist2(a, b) { return (a.x-b.x)**2 + (a.y-b.y)**2 }
@@ -574,8 +925,13 @@ function resetAfterGoal() {
 
 function endMatch(homeWon) {
   stopGame()
-  phase.value = 'fulltime'
-  result.value = homeWon ? 'Home Win!' : 'Away Win!'
+  if (storyMatchActive.value) {
+    storyMatchActive.value = false
+    showStoryPost(homeWon)
+  } else {
+    phase.value = 'fulltime'
+    result.value = homeWon ? 'Home Win!' : 'Away Win!'
+  }
 }
 
 function doPass(player) {
@@ -1209,6 +1565,564 @@ kbd {
 .ft-min {
   float: right;
   color: #666;
+}
+
+/* ── MODE TABS ── */
+.mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+  border-bottom: 2px solid #222;
+  padding-bottom: 12px;
+}
+
+.mode-tab {
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+
+.mode-tab:hover {
+  color: #fff;
+  border-color: #555;
+}
+
+.mode-tab.active {
+  background: #e67e22;
+  border-color: #e67e22;
+  color: #fff;
+}
+
+/* ── STORY MATCH BADGE ── */
+.story-match-badge {
+  background: #1a2535;
+  border: 1px solid #2a3a50;
+  color: #8ab0d0;
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  text-align: center;
+  width: 100%;
+  max-width: 700px;
+  letter-spacing: 0.5px;
+}
+
+/* ── CHARACTER CREATION ── */
+.story-create-screen {
+  background: linear-gradient(180deg, #0a0f14 0%, #0d1520 100%);
+}
+
+.create-card {
+  background: #0f1520;
+  border: 1px solid #1e2d40;
+  border-radius: 10px;
+  padding: 40px 32px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.create-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.create-title {
+  font-size: 22px;
+  color: #fff;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.create-sub {
+  color: #778899;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.name-input {
+  width: 100%;
+  background: #1a2535;
+  border: 2px solid #2a3a50;
+  color: #fff;
+  padding: 14px 16px;
+  border-radius: 6px;
+  font-size: 16px;
+  text-align: center;
+  font-family: inherit;
+  letter-spacing: 1px;
+  box-sizing: border-box;
+  margin-bottom: 24px;
+  transition: border-color 0.2s;
+}
+
+.name-input:focus {
+  outline: none;
+  border-color: #e67e22;
+}
+
+.name-input::placeholder {
+  color: #445566;
+}
+
+.create-rival-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #778899;
+  margin-bottom: 12px;
+}
+
+.create-rival-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.create-rival-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #1a2535;
+  border: 2px solid #2a3a50;
+  color: #ccc;
+  padding: 14px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+
+.create-rival-btn:hover {
+  border-color: #3a5a80;
+  color: #fff;
+}
+
+.create-rival-btn.active {
+  border-color: #e67e22;
+  background: #1e2d1a;
+}
+
+.crb-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.crb-title {
+  display: block;
+  font-weight: bold;
+  color: #fff;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.crb-desc {
+  display: block;
+  font-size: 11px;
+  color: #778899;
+  line-height: 1.4;
+}
+
+/* ── STORY HUB ── */
+.story-hub-screen {
+  background: linear-gradient(180deg, #0a0f14 0%, #0d1520 100%);
+  align-items: stretch;
+}
+
+.story-hub-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 0 20px 40px;
+  width: 100%;
+  max-width: 660px;
+  margin: 0 auto;
+}
+
+.chapter-map {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.story-ch-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #0f1a28;
+  border: 1px solid #1e2d40;
+  border-radius: 6px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.story-ch-row.ch-current {
+  border-color: #e67e22;
+  background: #1a1a0a;
+}
+
+.story-ch-row.ch-completed {
+  border-color: #2d5a2d;
+  background: #0d1a0d;
+}
+
+.story-ch-row.ch-locked {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.story-ch-row:not(.ch-locked):hover {
+  border-color: #3a5a80;
+  transform: translateX(4px);
+}
+
+.ch-num-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2a3a50;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.ch-completed .ch-num-badge { background: #2d5a2d; color: #6fdf6f; }
+.ch-current   .ch-num-badge { background: #5a3a0a; color: #e67e22; }
+
+.ch-body { flex: 1; min-width: 0; }
+
+.ch-city-line {
+  font-size: 13px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.ch-country { color: #778899; font-weight: normal; }
+
+.ch-title-line {
+  font-size: 11px;
+  color: #e67e22;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 3px;
+}
+
+.ch-loc-line {
+  font-size: 10px;
+  color: #556677;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ch-status-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.story-hub-footer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.story-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #1e2d40;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.spb-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e67e22, #f39c12);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.story-progress-label {
+  font-size: 11px;
+  color: #778899;
+  letter-spacing: 1px;
+}
+
+.reset-btn {
+  background: transparent;
+  border: 1px solid #5a2020;
+  color: #c0392b;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: all 0.15s;
+}
+
+.reset-btn:hover { background: #5a2020; color: #fff; }
+
+/* ── STORY INTRO ── */
+.story-intro-screen {
+  background: linear-gradient(180deg, #0a0f14 0%, #0d1520 100%);
+}
+
+.story-intro-card {
+  background: #0f1520;
+  border: 1px solid #1e2d40;
+  border-radius: 10px;
+  padding: 32px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.si-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.si-chapter-label {
+  font-size: 11px;
+  color: #778899;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.si-title {
+  font-size: 20px;
+  color: #fff;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.si-location {
+  font-size: 11px;
+  color: #556677;
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+
+.si-narrative {
+  color: #b0c4d8;
+  font-size: 13px;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.si-narrative p {
+  margin: 0 0 12px;
+}
+
+.si-narrative p:last-child {
+  margin-bottom: 0;
+  font-style: italic;
+  color: #d0d8e0;
+}
+
+.si-objective {
+  background: #0a1520;
+  border-left: 3px solid #e67e22;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.obj-icon { font-size: 14px; }
+
+.obj-text {
+  font-size: 12px;
+  color: #d0a060;
+  line-height: 1.5;
+}
+
+.si-versus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 12px;
+  background: #0a1520;
+  border-radius: 4px;
+}
+
+.si-vs-you  { font-size: 14px; font-weight: bold; color: #ef4444; }
+.si-vs-badge { font-size: 11px; color: #556677; text-transform: uppercase; letter-spacing: 2px; }
+.si-vs-them { font-size: 14px; font-weight: bold; color: #3b82f6; }
+
+.si-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sim-btn {
+  background: #1a2535;
+  border: 1px solid #2a3a50;
+  color: #8ab0d0;
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+
+.sim-btn:hover {
+  background: #2a3a50;
+  color: #fff;
+}
+
+/* ── STORY POST-MATCH ── */
+.story-post-screen {
+  background: linear-gradient(180deg, #0a0f14 0%, #0d1520 100%);
+}
+
+.story-post-card {
+  background: #0f1520;
+  border: 1px solid #1e2d40;
+  border-radius: 10px;
+  padding: 36px 32px;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+}
+
+.spc-result {
+  font-size: 32px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+}
+
+.spc-win  { color: #6fdf6f; }
+.spc-loss { color: #c0392b; }
+
+.spc-score {
+  font-size: 48px;
+  font-weight: bold;
+  color: #ffd700;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 8px;
+}
+
+.spc-city {
+  font-size: 11px;
+  color: #556677;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.spc-narrative {
+  color: #b0c4d8;
+  font-size: 13px;
+  line-height: 1.8;
+  text-align: left;
+  margin-bottom: 28px;
+  background: #0a1520;
+  padding: 16px;
+  border-radius: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.spc-narrative p {
+  margin: 0 0 12px;
+}
+
+.spc-narrative p:last-child {
+  margin-bottom: 0;
+  font-style: italic;
+  color: #d0d8e0;
+}
+
+.spc-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── STORY COMPLETE ── */
+.story-end-screen {
+  background: radial-gradient(ellipse at center, #1a1a0a 0%, #0a0a0a 70%);
+}
+
+.story-end-card {
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 480px;
+}
+
+.sec-trophy {
+  font-size: 72px;
+  margin-bottom: 20px;
+  animation: trophy-pulse 2s ease-in-out infinite;
+}
+
+@keyframes trophy-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.08); }
+}
+
+.sec-title {
+  font-size: 36px;
+  color: #ffd700;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin: 0 0 12px;
+}
+
+.sec-sub {
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.sec-name {
+  font-size: 15px;
+  color: #e67e22;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+
+.sec-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 /* ── RESPONSIVE ── */

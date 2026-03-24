@@ -448,6 +448,62 @@ def journey_result():
     })
 
 
+# ── Footy Street Story ─────────────────────────────────────────────────────────
+
+@api_bp.route("/street-story/chapters")
+def street_story_chapters():
+    rival_type = request.args.get("rival", "").lower()
+    from engine.street_story import all_chapters_dict
+    return jsonify(all_chapters_dict(rival_type))
+
+
+@api_bp.route("/street-story/chapter/<int:n>")
+def street_story_chapter(n: int):
+    rival_type = request.args.get("rival", "").lower()
+    from engine.street_story import get_chapter, chapter_to_dict
+    chapter = get_chapter(n)
+    if not chapter:
+        return jsonify({"error": f"Chapter {n} not found"}), 404
+    return jsonify(chapter_to_dict(chapter, rival_type))
+
+
+@api_bp.route("/street-story/simulate", methods=["POST"])
+def street_story_simulate():
+    """Simulate a street story chapter match (for 'Simulate' button)."""
+    body = request.get_json(force=True)
+    chapter_num = body.get("chapter", 1)
+    rival_type = body.get("rival", "").lower()
+
+    from engine.street_story import get_chapter, chapter_to_dict
+    chapter = get_chapter(chapter_num)
+    if not chapter:
+        return jsonify({"error": "Chapter not found"}), 404
+
+    opponent = chapter.opponent_club
+    player_club = "Hotspur FC"  # player's squad — use any mid-tier club
+
+    if opponent in CLUBS and player_club in CLUBS:
+        match_data = _simulate_result(player_club, opponent)
+        home_score = match_data["score"]["home"]
+        away_score = match_data["score"]["away"]
+        won = home_score > away_score
+    else:
+        import random as _random
+        won = _random.random() > 0.45
+        match_data = {"score": {"home": 3 if won else 1, "away": 1 if won else 3}}
+
+    c_dict = chapter_to_dict(chapter, rival_type)
+    narrative = c_dict["post_win"] if won else c_dict["post_loss"]
+
+    return jsonify({
+        "chapter": chapter_num,
+        "won": won,
+        "narrative": narrative,
+        "match": match_data,
+        "next_chapter": chapter_num + 1 if chapter_num < 7 else None,
+    })
+
+
 # ── TBG Pack System ────────────────────────────────────────────────────────────
 
 @api_bp.route("/packs")
