@@ -39,8 +39,8 @@ CHAPTERS: List[Chapter] = [
             "This is it. Show them who you are."
         ),
         objective="Score at least one goal in the trial match.",
-        home_club="Hotspur FC",
-        away_club="The Gunners FC",
+        home_club="Tottenham Hotspur",
+        away_club="Arsenal",
         ori_is_home=True,
         post_win=(
             "The final whistle blows. You look up at the bench — the head scout nods.\n\n"
@@ -66,16 +66,16 @@ CHAPTERS: List[Chapter] = [
     Chapter(
         number=2,
         title="The Breakthrough",
-        club="Hotspur FC",
+        club="Tottenham Hotspur",
         intro=(
             "Three months into your professional career, the manager calls you into his office.\n\n"
             "'I'm putting you on the bench tonight,' he says. 'Be ready. I need composure.'\n\n"
             "60th minute. Score: 0-0. The crowd is restless. He looks at you across the touchline.\n\n"
             "'Warm up, Ori.'"
         ),
-        objective="Come on as a sub and win the match for Hotspur.",
-        home_club="Hotspur FC",
-        away_club="Red Devils United",
+        objective="Come on as a sub and win the match for Tottenham.",
+        home_club="Tottenham Hotspur",
+        away_club="Manchester United",
         ori_is_home=True,
         post_win=(
             "Final whistle. Hotspur win and you made the difference.\n\n"
@@ -101,16 +101,16 @@ CHAPTERS: List[Chapter] = [
     Chapter(
         number=3,
         title="The Rival",
-        club="Blues Man City",
+        club="Manchester City",
         intro=(
             "A shock transfer. The biggest club in the city pays a record fee for a 20-year-old.\n\n"
-            "Your first game in City blue? Away at Hotspur. "
+            "Your first game in City blue? Away at Tottenham. "
             "The fans who used to chant your name now boo it.\n\n"
             "Football is brutal. And beautiful. Stand tall, Ori."
         ),
         objective="Win at your former club. Show them what they missed.",
-        home_club="Hotspur FC",
-        away_club="Blues Man City",
+        home_club="Tottenham Hotspur",
+        away_club="Manchester City",
         ori_is_home=False,
         post_win=(
             "You score the winner in the 87th minute. You don't celebrate — you can't.\n\n"
@@ -137,16 +137,16 @@ CHAPTERS: List[Chapter] = [
     Chapter(
         number=4,
         title="The Derby",
-        club="Blues Man City",
+        club="Manchester City",
         intro=(
             "The Manchester Derby. 55,000 inside the Etihad. Half a billion watching worldwide.\n\n"
             "Ten minutes in. Your teammate loses his head and gets a straight red card.\n\n"
             "Ten men. Eighty minutes to go. The whole world against you.\n\n"
             "Time to find out what you're made of."
         ),
-        objective="Hold on with 10 men. Win or draw against Red Devils United.",
-        home_club="Blues Man City",
-        away_club="Red Devils United",
+        objective="Hold on with 10 men. Win or draw against Manchester United.",
+        home_club="Manchester City",
+        away_club="Manchester United",
         ori_is_home=True,
         post_win=(
             "The final whistle triggers pandemonium in the stands.\n\n"
@@ -172,7 +172,7 @@ CHAPTERS: List[Chapter] = [
     Chapter(
         number=5,
         title="The Final",
-        club="White Madrid FC",
+        club="Real Madrid",
         intro=(
             "One year. Four clubs. An unbelievable journey.\n\n"
             "Real Madrid. The biggest club in the world. They came for you.\n\n"
@@ -181,8 +181,8 @@ CHAPTERS: List[Chapter] = [
             "This is what you were born for."
         ),
         objective="Win the Champions League Final. This is everything.",
-        home_club="White Madrid FC",
-        away_club="Munich FC",
+        home_club="Real Madrid",
+        away_club="Bayern Munich",
         ori_is_home=True,
         post_win=(
             "The final whistle goes.\n\n"

@@ -69,6 +69,7 @@
         <button class="btn btn-mode"      @click="go('/players')">🔍 &nbsp;Player Database</button>
         <button class="btn btn-mode"      @click="go('/league')">📊 &nbsp;Leagues</button>
         <button class="btn btn-street"    @click="go('/street')">🏙️ &nbsp;Footy Street</button>
+        <button class="btn btn-manager"   @click="go('/manager')">👤 &nbsp;Manager Editor</button>
       </nav>
     </div>
 
@@ -200,7 +201,7 @@ function go(path) { router.push(path) }
 .year { color: #ffd700; }
 .subtitle { font-size: 11px; color: #556; letter-spacing: 3px; margin-top: 5px; text-transform: uppercase; }
 
-.menu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 680px; max-width: 100%; }
+.menu-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 720px; max-width: 100%; }
 
 .btn {
   padding: 15px 20px; border-radius: 6px; border: none;
@@ -224,9 +225,14 @@ function go(path) { router.push(path) }
 .btn-mode:hover { background: #1a2535; border-color: #2e4060; color: #fff; transform: translateY(-1px); }
 .btn-street {
   background: linear-gradient(135deg, #e67e22, #c0392b); color: #fff;
-  box-shadow: 0 4px 18px rgba(230,126,34,.3); grid-column: span 2;
+  box-shadow: 0 4px 18px rgba(230,126,34,.3);
 }
 .btn-street:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(230,126,34,.45); }
+.btn-manager {
+  background: linear-gradient(135deg, #8e44ad, #6c3483); color: #fff;
+  box-shadow: 0 4px 18px rgba(142,68,173,.3);
+}
+.btn-manager:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(142,68,173,.45); }
 
 @media (max-width: 720px) {
   .menu-buttons { grid-template-columns: 1fr; width: 100%; padding: 0 20px; }

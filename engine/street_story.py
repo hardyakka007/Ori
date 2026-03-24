@@ -46,7 +46,7 @@ CHAPTERS: list[StoryChapter] = [
             "It starts here. It always starts somewhere."
         ),
         objective="Win the match on your home court. Remind yourself who you are.",
-        opponent_club="Hotspur FC",
+        opponent_club="Tottenham Hotspur",
         opponent_label="Dani's Crew",
         post_win=(
             "The final whistle — actually just Dani shouting 'game over, man' — cuts through "
@@ -84,7 +84,7 @@ CHAPTERS: list[StoryChapter] = [
             "Marcus hands you a bib. 'You're home team. Don't embarrass me.'"
         ),
         objective="Win in London. Put your name on the map.",
-        opponent_club="The Blues Chelsea",
+        opponent_club="Chelsea",
         opponent_label="London Street Kings",
         post_win=(
             "You walk out of the cage to a grudging nod from the London boys. "
@@ -121,7 +121,7 @@ CHAPTERS: list[StoryChapter] = [
             "You smile. 'Watch me.'"
         ),
         objective="Win in Paris. Earn their respect.",
-        opponent_club="Parisians FC",
+        opponent_club="Paris Saint-Germain",
         opponent_label="Banlieue FC",
         post_win=(
             "When the game ends, there's silence for a second. Then the kid who warned "
@@ -175,7 +175,7 @@ CHAPTERS: list[StoryChapter] = [
             "You say nothing. You lace your boots tighter."
         ),
         objective="Win in Lagos. Make them eat their words.",
-        opponent_club="Red Devils United",
+        opponent_club="Manchester United",
         opponent_label="The Rival",
         is_rival_chapter=True,
         post_win=(
@@ -226,7 +226,7 @@ CHAPTERS: list[StoryChapter] = [
             "Then he points to the favela court up the hill. 'Now show what you learned.'"
         ),
         objective="Win in Rio. Prove the training was worth it.",
-        opponent_club="Rossoneri FC",
+        opponent_club="AC Milan",
         opponent_label="Rio Favela FC",
         post_win=(
             "You play the best football of your life.\n\n"
@@ -261,7 +261,7 @@ CHAPTERS: list[StoryChapter] = [
             "You're not that person anymore."
         ),
         objective="Win the semi-final. One match between you and the Street Crown Final.",
-        opponent_club="Catalonia FC",
+        opponent_club="FC Barcelona",
         opponent_label="Barcelona Street Elite",
         post_win=(
             "Final whistle.\n\n"
@@ -317,7 +317,7 @@ CHAPTERS: list[StoryChapter] = [
             "Good."
         ),
         objective="Win the Street Crown. This is what you came back for.",
-        opponent_club="White Madrid FC",
+        opponent_club="Real Madrid",
         opponent_label="Your Rival",
         is_rival_chapter=True,
         post_win=(

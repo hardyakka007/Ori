@@ -1,346 +1,142 @@
 <template>
   <div class="street-view">
 
-    <!-- ── TEAM SELECTION ── -->
-    <div v-if="phase === 'select'" class="screen select-screen">
+    <!-- ── SELECT ── -->
+    <div v-if="phase === 'select'" class="screen">
       <header class="screen-header">
         <button class="back-btn" @click="goHome">← Back</button>
         <h1>Footy Street</h1>
-        <p>5v5 street football • First to 3 goals wins</p>
+        <p>5v5 • First to 3 goals • Walls in play</p>
       </header>
 
       <div class="mode-tabs">
         <button class="mode-tab" :class="{ active: selectTab === 'quick' }" @click="selectTab = 'quick'">Quick Match</button>
-        <button class="mode-tab" :class="{ active: selectTab === 'story' }" @click="enterStoryMode">Story Mode</button>
+        <button class="mode-tab" :class="{ active: selectTab === 'story' }" @click="selectTab = 'story'">Story Mode</button>
       </div>
 
-      <div class="team-pickers">
+      <!-- Quick Match -->
+      <div v-if="selectTab === 'quick'" class="team-pickers">
         <div class="picker-col">
-          <h2 class="picker-title">🎮 Your Team</h2>
+          <h2 class="picker-title">Your Team</h2>
           <div class="club-grid">
-            <button
-              v-for="club in clubs" :key="club.name"
-              class="club-btn" :class="{ selected: myTeam === club.name, blocked: oppTeam === club.name }"
-              :disabled="oppTeam === club.name"
-              @click="myTeam = club.name"
-            >
-              <span class="club-name">{{ club.name }}</span>
-              <span class="club-league">{{ club.league }}</span>
+            <button v-for="c in clubs" :key="c.name" class="club-btn"
+              :class="{ selected: myTeam === c.name, blocked: oppTeam === c.name }"
+              :disabled="oppTeam === c.name" @click="myTeam = c.name">
+              <span class="club-name">{{ c.name }}</span>
             </button>
           </div>
         </div>
-
         <div class="vs-col">
           <div class="vs-badge">VS</div>
-          <button class="kickoff-btn" :disabled="!myTeam || !oppTeam" @click="loadTeams">
-            Kick Off ⚽
-          </button>
+          <button class="kickoff-btn" :disabled="!myTeam || !oppTeam" @click="startStreetMatch">Kick Off</button>
         </div>
-
         <div class="picker-col">
-          <h2 class="picker-title">🤖 Opponent</h2>
+          <h2 class="picker-title">Opponent</h2>
           <div class="club-grid">
-            <button
-              v-for="club in clubs" :key="club.name"
-              class="club-btn" :class="{ selected: oppTeam === club.name, blocked: myTeam === club.name }"
-              :disabled="myTeam === club.name"
-              @click="oppTeam = club.name"
-            >
-              <span class="club-name">{{ club.name }}</span>
-              <span class="club-league">{{ club.league }}</span>
+            <button v-for="c in clubs" :key="c.name" class="club-btn"
+              :class="{ selected: oppTeam === c.name, blocked: myTeam === c.name }"
+              :disabled="myTeam === c.name" @click="oppTeam = c.name">
+              <span class="club-name">{{ c.name }}</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Story Mode -->
+      <div v-else class="story-hub">
+        <div v-if="!storySetup && !storyName" class="story-intro">
+          <h2>Your Story</h2>
+          <p>Enter your name to begin the 7-chapter street football journey.</p>
+          <input v-model="nameInput" class="name-input" placeholder="Your name..." maxlength="20" />
+          <div class="rival-choice">
+            <p>Choose your rival:</p>
+            <button class="rival-btn" :class="{ selected: rivalChoice === 'crew' }" @click="rivalChoice = 'crew'">
+              The Crew — a whole team that humiliated you
+            </button>
+            <button class="rival-btn" :class="{ selected: rivalChoice === 'rival' }" @click="rivalChoice = 'player'">
+              The Rival — one player always ahead of you
+            </button>
+          </div>
+          <button class="kickoff-btn" :disabled="!nameInput || !rivalChoice" @click="beginStory">Begin</button>
+        </div>
+        <div v-else class="story-chapters">
+          <div class="story-header">
+            <span class="story-name">{{ storyName }}</span>
+            <div class="story-progress">Chapter {{ storyChapter }} / 7</div>
+            <div class="story-bar"><div class="story-fill" :style="{ width: (storyChapter / 7 * 100) + '%' }"></div></div>
+          </div>
+          <div class="chapters-list">
+            <div v-for="ch in storyChapters" :key="ch.number" class="chapter-card"
+              :class="{ done: completedChapters.includes(ch.number), current: ch.number === storyChapter, locked: ch.number > storyChapter }">
+              <div class="ch-num">{{ ch.number }}</div>
+              <div class="ch-info">
+                <div class="ch-city">{{ ch.city }}, {{ ch.country }}</div>
+                <div class="ch-title">{{ ch.title }}</div>
+              </div>
+              <div class="ch-status">{{ completedChapters.includes(ch.number) ? '✓' : ch.number === storyChapter ? '▶' : '🔒' }}</div>
+            </div>
+          </div>
+          <div class="story-actions">
+            <button class="kickoff-btn" @click="playCurrentChapter">Play Chapter {{ storyChapter }}</button>
+            <button class="reset-btn" @click="resetStory">Reset Story</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── MATCH ── -->
-    <div v-else-if="phase === 'match'" class="match-wrapper" @keydown.prevent>
-      <!-- Scorebar -->
+    <!-- ── 3D STREET MATCH ── -->
+    <div v-else-if="phase === 'match'" class="match-wrapper">
       <div class="scorebar">
-        <span class="sb-team">{{ homeName }}</span>
+        <span class="sb-team">{{ myTeam }}</span>
         <div class="sb-center">
           <span class="sb-score">{{ homeScore }} – {{ awayScore }}</span>
           <span class="sb-time">{{ gameMinDisplay }}'</span>
+          <span class="sb-target">First to 3</span>
         </div>
-        <span class="sb-team away">{{ awayName }}</span>
+        <span class="sb-team away">{{ oppTeam }}</span>
       </div>
 
-      <!-- Canvas -->
-      <div class="canvas-wrap" ref="canvasWrapRef">
-        <canvas ref="canvasRef" :width="CANVAS_W" :height="CANVAS_H"></canvas>
+      <div class="canvas-wrap" ref="canvasWrap">
+        <canvas ref="threeCanvas" class="three-canvas"></canvas>
+        <div class="cam-label">📷 Street Mode</div>
 
-        <!-- Overlays -->
-        <div v-if="overlay" class="overlay" :class="overlayClass">
-          <div class="overlay-content">
-            <div class="overlay-title">{{ overlay.title }}</div>
-            <div v-if="overlay.subtitle" class="overlay-sub">{{ overlay.subtitle }}</div>
-            <button v-if="overlay.btn" class="overlay-btn" @click="overlay.action">{{ overlay.btn }}</button>
+        <Transition name="overlay-fade">
+          <div v-if="overlay" class="overlay" :class="overlay.cls">
+            <div class="overlay-content">
+              <div class="overlay-title">{{ overlay.title }}</div>
+              <div v-if="overlay.sub" class="overlay-sub">{{ overlay.sub }}</div>
+              <button v-if="overlay.btn" class="overlay-btn" @click="overlay.action">{{ overlay.btn }}</button>
+            </div>
           </div>
-        </div>
+        </Transition>
       </div>
 
-      <!-- Story chapter badge (shown during story match) -->
-      <div v-if="storyMatchActive && currentStoryChapter" class="story-match-badge">
-        Ch.{{ currentStoryChapter.number }} · {{ currentStoryChapter.city }} · vs {{ currentStoryChapter.opponent_label }}
-      </div>
-
-      <!-- Controls -->
       <div class="controls-bar">
         <span><kbd>↑↓←→</kbd> Move</span>
-        <span><kbd>SPC</kbd> Pass</span>
+        <span><kbd>Space</kbd> Pass</span>
         <span><kbd>Z</kbd> Shoot</span>
         <span><kbd>X</kbd> Sprint</span>
         <span><kbd>S</kbd> Tackle</span>
-        <span><kbd>Esc</kbd> Pause</span>
-        <button class="touch-toggle-btn" @click="showTouchControls = !showTouchControls">
-          {{ showTouchControls ? 'Hide' : 'Touch' }} Controls
-        </button>
-      </div>
-
-      <!-- Touch Controls -->
-      <div v-if="showTouchControls || isMobile" class="touch-controls">
-        <div class="touch-dpad">
-          <div class="dpad-row">
-            <button
-              class="touch-btn dpad-up"
-              @touchstart.prevent="touchStart('up')" @touchend.prevent="touchEnd('up')"
-              @click="touchStart('up')"
-            >↑</button>
-          </div>
-          <div class="dpad-row">
-            <button
-              class="touch-btn dpad-left"
-              @touchstart.prevent="touchStart('left')" @touchend.prevent="touchEnd('left')"
-              @click="touchStart('left')"
-            >←</button>
-            <button class="touch-btn dpad-center" disabled>·</button>
-            <button
-              class="touch-btn dpad-right"
-              @touchstart.prevent="touchStart('right')" @touchend.prevent="touchEnd('right')"
-              @click="touchStart('right')"
-            >→</button>
-          </div>
-          <div class="dpad-row">
-            <button
-              class="touch-btn dpad-down"
-              @touchstart.prevent="touchStart('down')" @touchend.prevent="touchEnd('down')"
-              @click="touchStart('down')"
-            >↓</button>
-          </div>
-        </div>
-
-        <div class="touch-actions">
-          <div class="action-row">
-            <button
-              class="touch-btn action-pass"
-              @touchstart.prevent="touchStart('space')" @touchend.prevent="touchEnd('space')"
-              @click="touchStart('space')"
-            >PASS</button>
-            <button
-              class="touch-btn action-shoot"
-              @touchstart.prevent="touchStart('z')" @touchend.prevent="touchEnd('z')"
-              @click="touchStart('z')"
-            >SHOOT</button>
-          </div>
-          <div class="action-row">
-            <button
-              class="touch-btn action-sprint"
-              @touchstart.prevent="touchStart('x')" @touchend.prevent="touchEnd('x')"
-              @click="touchStart('x')"
-            >SPRINT</button>
-            <button
-              class="touch-btn action-tackle"
-              @touchstart.prevent="touchStart('s')" @touchend.prevent="touchEnd('s')"
-              @click="touchStart('s')"
-            >TACKLE</button>
-          </div>
-          <div class="action-row">
-            <button
-              class="touch-btn action-pause"
-              @touchstart.prevent="touchStart('escape')" @touchend.prevent="touchEnd('escape')"
-              @click="touchStart('escape')"
-            >PAUSE</button>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- ── STORY MODE ENTRY (inside select screen) ── -->
-
-    <!-- ── CHARACTER CREATION ── -->
-    <div v-else-if="phase === 'story-create'" class="screen story-create-screen">
-      <div class="create-card">
-        <button class="back-btn" @click="phase = 'select'">← Back</button>
-        <div class="create-icon">⚽</div>
-        <h2 class="create-title">Name Your Player</h2>
-        <p class="create-sub">You're stepping onto a synthetic pitch in Modi'in, Israel.<br>Who are you?</p>
-        <input
-          v-model="playerName"
-          class="name-input"
-          type="text"
-          placeholder="Enter your name"
-          maxlength="22"
-          @keydown.enter="startStory"
-        />
-        <div class="create-rival-label">Who do you face at the final?</div>
-        <div class="create-rival-choices">
-          <button
-            class="create-rival-btn"
-            :class="{ active: pendingRival === 'crew' }"
-            @click="pendingRival = 'crew'"
-          >
-            <span class="crb-icon">👥</span>
-            <span class="crb-title">The Crew</span>
-            <span class="crb-desc">A whole team that humiliated you. Final = group rematch.</span>
-          </button>
-          <button
-            class="create-rival-btn"
-            :class="{ active: pendingRival === 'rival' }"
-            @click="pendingRival = 'rival'"
-          >
-            <span class="crb-icon">⚡</span>
-            <span class="crb-title">The Rival</span>
-            <span class="crb-desc">One player always better than you. Final = 5v5 showdown.</span>
-          </button>
+    <!-- ── POST MATCH ── -->
+    <div v-else-if="phase === 'post'" class="screen">
+      <div class="post-card">
+        <div class="post-badge">{{ isStoryMode ? '📖 Chapter ' + storyChapter : '🏙️ Street' }}</div>
+        <h2>{{ homeScore >= 3 ? 'You Win!' : 'You Lose!' }}</h2>
+        <div class="post-score">
+          <span>{{ myTeam }}</span>
+          <span class="score-big">{{ homeScore }} – {{ awayScore }}</span>
+          <span>{{ oppTeam }}</span>
         </div>
-        <button
-          class="kickoff-btn"
-          :disabled="!playerName.trim() || !pendingRival"
-          @click="startStory"
-          style="margin-top:24px"
-        >
-          Begin Story →
-        </button>
-      </div>
-    </div>
-
-    <!-- ── STORY HUB ── -->
-    <div v-else-if="phase === 'story-hub'" class="screen story-hub-screen">
-      <header class="screen-header">
-        <button class="back-btn" @click="phase = 'select'">← Back</button>
-        <h1>The Road to Street Crowns</h1>
-        <p v-if="playerName">{{ playerName }} · 7 cities · 7 matches</p>
-        <p v-else>7 cities · 7 matches · one story</p>
-      </header>
-      <div class="story-hub-body">
-        <div class="chapter-map">
-          <div
-            v-for="ch in storyChapters" :key="ch.number"
-            class="story-ch-row"
-            :class="{
-              'ch-completed': storyProgress.completed.includes(ch.number),
-              'ch-current':   ch.number === storyProgress.currentChapter && !storyProgress.completed.includes(ch.number),
-              'ch-locked':    ch.number > storyProgress.currentChapter,
-            }"
-            @click="ch.number <= storyProgress.currentChapter && openStoryChapter(ch.number)"
-          >
-            <div class="ch-num-badge">{{ ch.number }}</div>
-            <div class="ch-body">
-              <div class="ch-city-line">{{ ch.city }}<span v-if="ch.country" class="ch-country"> · {{ ch.country }}</span></div>
-              <div class="ch-title-line">{{ ch.title }}</div>
-              <div class="ch-loc-line">{{ ch.location_detail }}</div>
-            </div>
-            <div class="ch-status-icon">
-              <span v-if="storyProgress.completed.includes(ch.number)">✅</span>
-              <span v-else-if="ch.number === storyProgress.currentChapter">▶</span>
-              <span v-else>🔒</span>
-            </div>
-          </div>
+        <div v-if="isStoryMode && currentChapterData" class="story-result-text">
+          {{ homeScore >= awayScore ? currentChapterData.post_win : currentChapterData.post_loss }}
         </div>
-        <div class="story-hub-footer">
-          <div class="story-progress-bar">
-            <div class="spb-fill" :style="{ width: (storyProgress.completed.length / 7 * 100) + '%' }"></div>
-          </div>
-          <div class="story-progress-label">{{ storyProgress.completed.length }} / 7 chapters complete</div>
-          <button v-if="storyProgress.completed.length > 0" class="reset-btn" @click="resetStory">Reset Story</button>
+        <div class="post-actions">
+          <button class="btn btn-primary" @click="playAgain">Play Again</button>
+          <button class="btn btn-secondary" @click="goHome">Main Menu</button>
         </div>
-      </div>
-    </div>
-
-    <!-- ── STORY CHAPTER INTRO ── -->
-    <div v-else-if="phase === 'story-intro' && currentStoryChapter" class="screen story-intro-screen">
-      <div class="story-intro-card">
-        <div class="si-header">
-          <button class="back-btn" @click="phase = 'story-hub'">← Map</button>
-          <div class="si-chapter-label">Chapter {{ currentStoryChapter.number }} · {{ currentStoryChapter.city }}</div>
-        </div>
-        <h2 class="si-title">{{ currentStoryChapter.title }}</h2>
-        <div class="si-location">📍 {{ currentStoryChapter.location_detail }}</div>
-        <div class="si-narrative" v-html="storyIntroFormatted"></div>
-        <div class="si-objective">
-          <span class="obj-icon">🎯</span>
-          <span class="obj-text">{{ currentStoryChapter.objective }}</span>
-        </div>
-        <div class="si-versus">
-          <span class="si-vs-you">{{ playerName || 'Your Crew' }}</span>
-          <span class="si-vs-badge">VS</span>
-          <span class="si-vs-them">{{ currentStoryChapter.opponent_label }}</span>
-        </div>
-        <div class="si-actions">
-          <button class="kickoff-btn" @click="playStoryMatch">Play Match ⚽</button>
-          <button class="sim-btn" @click="simulateStoryChapter">Simulate</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── STORY POST-MATCH ── -->
-    <div v-else-if="phase === 'story-post' && currentStoryChapter" class="screen story-post-screen">
-      <div class="story-post-card">
-        <div class="spc-result" :class="storyMatchWon ? 'spc-win' : 'spc-loss'">
-          {{ storyMatchWon ? 'Victory' : 'Defeat' }}
-        </div>
-        <div class="spc-score">{{ homeScore }} – {{ awayScore }}</div>
-        <div class="spc-city">{{ currentStoryChapter.city }}</div>
-        <div class="spc-narrative" v-html="storyPostNarrative"></div>
-        <div class="spc-actions">
-          <button
-            v-if="storyMatchWon && !currentStoryChapter.is_last"
-            class="kickoff-btn"
-            @click="continueStory"
-          >Next Chapter →</button>
-          <button
-            v-if="storyMatchWon && currentStoryChapter.is_last"
-            class="kickoff-btn"
-            @click="phase = 'story-end'"
-          >Final Screen →</button>
-          <button v-if="!storyMatchWon" class="kickoff-btn" @click="retryStory">
-            Retry Match
-          </button>
-          <button v-if="!storyMatchWon" class="sim-btn" @click="continueStory">
-            Continue Anyway
-          </button>
-          <button class="back-btn" @click="phase = 'story-hub'" style="margin-top:12px">← Back to Map</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── STORY COMPLETE ── -->
-    <div v-else-if="phase === 'story-end'" class="screen story-end-screen">
-      <div class="story-end-card">
-        <div class="sec-trophy">🏆</div>
-        <h2 class="sec-title">Street Crown</h2>
-        <p class="sec-sub">Modi'in to the World Final.<br>Seven cities. One story.</p>
-        <div class="sec-name">{{ playerName || 'Street Legend' }}. Street Crown Champion.</div>
-        <div class="sec-actions">
-          <button class="kickoff-btn" @click="resetStory">Play Again</button>
-          <button class="back-btn" style="margin-top:12px" @click="goHome">Back to Menu</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── FULL TIME ── -->
-    <div v-else-if="phase === 'fulltime'" class="screen ft-screen">
-      <div class="ft-card">
-        <h2>{{ result }}</h2>
-        <div class="ft-score">{{ homeScore }} – {{ awayScore }}</div>
-        <div class="ft-teams">{{ homeName }} vs {{ awayName }}</div>
-        <div v-if="scorers.length" class="ft-scorers">
-          <div v-for="s in scorers" :key="s.player+s.minute" class="ft-scorer">
-            ⚽ {{ s.player }} <span class="ft-min">{{ s.minute }}'</span>
-          </div>
-        </div>
-        <button class="back-btn" @click="goHome">Back to Menu</button>
       </div>
     </div>
 
@@ -348,1800 +144,502 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import * as THREE from 'three'
+import { createScene, resizeRenderer } from '../three/scene.js'
+import { PITCH_W, PITCH_L } from '../three/pitch.js'
+import { createPlayerModel, animatePlayer, KIT_MAP } from '../three/playerModel.js'
+import { createBall, stepBallPhysics, kickBall, resetBall } from '../three/ball.js'
+import { createCamera } from '../three/cameraRig.js'
 
 const router = useRouter()
 
-// ── Constants ────────────────────────────────────────────────────────────────
-const CANVAS_W = 700
-const CANVAS_H = 300
-const PW = 60           // pitch width in game units
-const PH = 40           // pitch height in game units
-const SCALE = CANVAS_H / PH   // 7.5 px / unit
-const GOAL_Y1 = 16      // goal top edge
-const GOAL_Y2 = 24      // goal bottom edge
-const GOAL_CY = 20      // goal centre y
-const PLAYER_R = 2      // player circle radius (smaller for 5v5)
-const BALL_R   = 1.5    // ball radius
+// UI state
+const phase      = ref('select')
+const selectTab  = ref('quick')
+const clubs      = ref([])
+const myTeam     = ref('')
+const oppTeam    = ref('')
 
-// Timing: 2 real min = 60 game min → 60 ticks per game minute at 30fps
-const FPS = 30
-const GAME_DUR_TICKS = 3600   // 2 min × 30 fps = 3600
-const TICKS_PER_GMIN = 60
-const WIN_GOALS = 3    // first to 3 goals wins
+// Story state
+const nameInput        = ref('')
+const storyName        = ref('')
+const rivalChoice      = ref('')
+const storySetup       = ref(false)
+const storyChapter     = ref(1)
+const storyChapters    = ref([])
+const completedChapters = ref([])
+const isStoryMode      = ref(false)
+const currentChapterData = ref(null)
 
-// Speeds
-const SPD_NORMAL  = 2.0
-const SPD_SPRINT  = 3.4
-const FRICTION    = 0.88
-const PASS_PWR    = 13
-const SHOOT_PWR   = 22
-const CTRL_RAD    = 4
-const TACKLE_RAD  = 4
+// Match state
+const homeScore   = ref(0)
+const awayScore   = ref(0)
+const gameSec     = ref(0)
+const MATCH_SECS  = 120  // 2 real minutes
+const overlay     = ref(null)
 
-// ── State ─────────────────────────────────────────────────────────────────────
-const clubs    = ref([])
-const myTeam   = ref('')
-const oppTeam  = ref('')
-const phase    = ref('select')
+const gameMinDisplay = computed(() => Math.floor((gameSec.value / MATCH_SECS) * 60))
 
-const canvasRef     = ref(null)
-const canvasWrapRef = ref(null)
+// Three.js
+const threeCanvas = ref(null)
+const canvasWrap  = ref(null)
+let renderer, scene, camera, ball
+let animId = null
+let clock  = new THREE.Clock()
+let playerObjects = []
+let controlledIdx = 0
+const keys = {}
 
-// Game state
-const homeScore = ref(0)
-const awayScore = ref(0)
-const homeName  = ref('')
-const awayName  = ref('')
-const gameMinDisplay = ref(0)
-const overlay   = ref(null)
-const overlayClass = ref('')
-const scorers   = ref([])
-const result = ref('')
+// Street pitch dimensions (compact)
+const SPW = 32   // street pitch width
+const SPL = 50   // street pitch length
 
-// Internal game objects
-let ctx = null
-let rafId = null
-let loopInterval = null
-let tick = 0
-let gamePaused = false
-let goldenGoal = false
-
-let ball = null
-let homePlayers = []
-let awayPlayers = []
-let controlledId = 0  // index in homePlayers
-let sprintCooldown = 0
-let goalFlash = 0
-
-const keys = { up: false, down: false, left: false, right: false, space: false, z: false, x: false, s: false }
-const keyLatch = { space: false, z: false, s: false }
-
-const showTouchControls = ref(false)
-const isMobile = computed(() => window.innerWidth <= 900)
-
-// ── Story Mode State ───────────────────────────────────────────────────────────
-const selectTab = ref('quick')
-const storyChapters = ref([])
-const currentStoryChapter = ref(null)
-const storyMatchActive = ref(false)
-const storyMatchWon = ref(false)
-const storyPostNarrative = ref('')
-
-// Load saved progress immediately
-const _savedProgress = (() => {
-  try {
-    const raw = localStorage.getItem('tbg_street_story')
-    if (raw) return JSON.parse(raw)
-  } catch { /* ignore */ }
-  return { completed: [], currentChapter: 1, rivalType: '', playerName: '' }
-})()
-
-const storyProgress  = ref(_savedProgress)
-const storyRivalType = ref(_savedProgress.rivalType || '')
-const playerName     = ref(_savedProgress.playerName || '')
-const pendingRival   = ref('')
-
-function _saveStoryProgress() {
-  localStorage.setItem('tbg_street_story', JSON.stringify({
-    completed:      storyProgress.value.completed,
-    currentChapter: storyProgress.value.currentChapter,
-    rivalType:      storyRivalType.value,
-    playerName:     playerName.value,
-  }))
-}
-
-const storyIntroFormatted = computed(() => {
-  if (!currentStoryChapter.value) return ''
-  return currentStoryChapter.value.intro
-    .split('\n\n')
-    .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-    .join('')
-})
-
-// ── Story Mode Functions ───────────────────────────────────────────────────────
-
-async function enterStoryMode() {
-  // If no player name yet, go to character creation
-  if (!playerName.value || !storyRivalType.value) {
-    pendingRival.value = storyRivalType.value || ''
-    phase.value = 'story-create'
-    return
-  }
-  await _loadStoryChapters()
-  phase.value = 'story-hub'
-}
-
-async function startStory() {
-  if (!playerName.value.trim() || !pendingRival.value) return
-  storyRivalType.value = pendingRival.value
-  storyProgress.value.rivalType = pendingRival.value
-  storyProgress.value.playerName = playerName.value.trim()
-  _saveStoryProgress()
-  await _loadStoryChapters()
-  phase.value = 'story-hub'
-}
-
-async function _loadStoryChapters() {
-  try {
-    const res = await fetch(`/api/street-story/chapters?rival=${storyRivalType.value}`)
-    storyChapters.value = await res.json()
-  } catch { /* show hub anyway with empty list */ }
-}
-
-async function openStoryChapter(n) {
-  try {
-    const res = await fetch(`/api/street-story/chapter/${n}?rival=${storyRivalType.value}`)
-    currentStoryChapter.value = await res.json()
-  } catch { return }
-  phase.value = 'story-intro'
-}
-
-function setRivalType(type) {
-  storyRivalType.value = type
-  storyProgress.value.rivalType = type
-  _saveStoryProgress()
-  openStoryChapter(4)
-}
-
-async function playStoryMatch() {
-  if (!currentStoryChapter.value) return
-  storyMatchActive.value = true
-  const ch = currentStoryChapter.value
-  try {
-    const [homeRes, awayRes] = await Promise.all([
-      fetch('/api/teams/Hotspur%20FC'),
-      fetch(`/api/teams/${encodeURIComponent(ch.opponent_club)}`),
-    ])
-    const homeData = await homeRes.json()
-    const awayData = await awayRes.json()
-    homeName.value = playerName.value || 'Your Crew'
-    awayName.value = ch.opponent_label
-    const homeTop = homeData.players.slice(0, 5)
-    const awayTop = awayData.players.slice(0, 5)
-    initGame(homeTop, awayTop)
-  } catch {
-    alert('Could not load team data — is the backend running?')
-    storyMatchActive.value = false
-  }
-}
-
-async function simulateStoryChapter() {
-  if (!currentStoryChapter.value) return
-  try {
-    const res = await fetch('/api/street-story/simulate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chapter: currentStoryChapter.value.number,
-        rival: storyRivalType.value,
-      }),
-    })
-    const data = await res.json()
-    homeScore.value = data.match?.score?.home ?? (data.won ? 3 : 1)
-    awayScore.value = data.match?.score?.away ?? (data.won ? 1 : 3)
-    storyMatchWon.value = data.won
-    storyPostNarrative.value = _formatNarrative(data.narrative)
-    if (data.won) _markChapterComplete(currentStoryChapter.value.number)
-    phase.value = 'story-post'
-  } catch {
-    alert('Simulation failed — is the backend running?')
-  }
-}
-
-function showStoryPost(won) {
-  const ch = currentStoryChapter.value
-  storyMatchWon.value = won
-  const rawNarrative = won ? ch.post_win : ch.post_loss
-  storyPostNarrative.value = _formatNarrative(rawNarrative)
-  if (won) _markChapterComplete(ch.number)
-  phase.value = 'story-post'
-}
-
-function _formatNarrative(text) {
-  return text
-    .split('\n\n')
-    .map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-    .join('')
-}
-
-function _markChapterComplete(n) {
-  if (!storyProgress.value.completed.includes(n)) {
-    storyProgress.value.completed.push(n)
-  }
-  if (storyProgress.value.currentChapter <= n) {
-    storyProgress.value.currentChapter = n + 1
-  }
-  _saveStoryProgress()
-}
-
-function continueStory() {
-  const next = currentStoryChapter.value.number + 1
-  if (next > 7) {
-    phase.value = 'story-end'
-  } else {
-    openStoryChapter(next)
-  }
-}
-
-function retryStory() {
-  phase.value = 'story-intro'
-}
-
-async function resetStory() {
-  storyProgress.value = { completed: [], currentChapter: 1, rivalType: '', playerName: '' }
-  storyRivalType.value = ''
-  playerName.value = ''
-  pendingRival.value = ''
-  _saveStoryProgress()
-  pendingRival.value = ''
-  phase.value = 'story-create'
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function dist2(a, b) { return (a.x-b.x)**2 + (a.y-b.y)**2 }
-function dist(a, b)  { return Math.sqrt(dist2(a, b)) }
-function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)) }
-function rnd(lo, hi) { return lo + Math.random() * (hi - lo) }
-
-// ── Club & Team Loading ───────────────────────────────────────────────────────
-onMounted(async () => {
+async function loadClubs() {
   try {
     const res = await fetch('/api/clubs')
     clubs.value = await res.json()
   } catch { /* ignore */ }
-})
-
-function goHome() {
-  stopGame()
-  router.push('/')
 }
 
-async function loadTeams() {
-  if (!myTeam.value || !oppTeam.value) return
+async function loadStoryChapters() {
   try {
-    const [homeRes, awayRes] = await Promise.all([
-      fetch(`/api/teams/${encodeURIComponent(myTeam.value)}`),
-      fetch(`/api/teams/${encodeURIComponent(oppTeam.value)}`),
-    ])
-    const homeData = await homeRes.json()
-    const awayData = await awayRes.json()
-    homeName.value = homeData.club.name
-    awayName.value = awayData.club.name
-    // Take top 5 players by OVR
-    const homeTop = homeData.players.slice(0, 5)
-    const awayTop = awayData.players.slice(0, 5)
-    initGame(homeTop, awayTop)
+    const res = await fetch('/api/street-story/chapters')
+    storyChapters.value = await res.json()
+  } catch { /* ignore */ }
+}
+
+function loadStoryProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('tbg_street_story') || '{}')
+    if (saved.name) {
+      storyName.value      = saved.name
+      rivalChoice.value    = saved.rival || ''
+      storyChapter.value   = saved.chapter || 1
+      completedChapters.value = saved.completed || []
+      storySetup.value     = true
+    }
+  } catch { /* ignore */ }
+}
+
+function saveStoryProgress() {
+  localStorage.setItem('tbg_street_story', JSON.stringify({
+    name: storyName.value,
+    rival: rivalChoice.value,
+    chapter: storyChapter.value,
+    completed: completedChapters.value,
+  }))
+}
+
+function beginStory() {
+  storyName.value  = nameInput.value.trim()
+  storySetup.value = true
+  saveStoryProgress()
+}
+
+function resetStory() {
+  storyName.value      = ''
+  rivalChoice.value    = ''
+  storyChapter.value   = 1
+  completedChapters.value = []
+  storySetup.value     = false
+  nameInput.value      = ''
+  localStorage.removeItem('tbg_street_story')
+}
+
+async function playCurrentChapter() {
+  try {
+    const res = await fetch(`/api/street-story/chapter/${storyChapter.value}?rival=${rivalChoice.value}`)
+    currentChapterData.value = await res.json()
+    myTeam.value  = 'Tottenham Hotspur'
+    oppTeam.value = currentChapterData.value.opponent_club || 'Manchester City'
+    isStoryMode.value = true
+    startStreetMatch()
   } catch {
-    alert('Could not load team data — is the backend running?')
+    myTeam.value  = 'Tottenham Hotspur'
+    oppTeam.value = 'Manchester City'
+    isStoryMode.value = true
+    startStreetMatch()
   }
 }
 
-// ── Game Init ─────────────────────────────────────────────────────────────────
-function initGame(homeSquad, awaySquad) {
+async function startStreetMatch() {
+  phase.value = 'match'
   homeScore.value = 0
   awayScore.value = 0
-  tick = 0
-  goldenGoal = false
-  scorers.value = []
-  result.value = ''
-
-  // 5v5 formations on compact 60×40 pitch
-  const homeFormPos = [
-    [3, 20],      // GK
-    [13, 12],     // DEF/MID
-    [13, 28],     // DEF/MID
-    [28, 10],     // MID
-    [28, 30],     // MID/ATT
-  ]
-  const awayFormPos = [
-    [57, 20],     // GK
-    [47, 28],     // DEF/MID
-    [47, 12],     // DEF/MID
-    [32, 30],     // MID
-    [32, 10],     // MID/ATT
-  ]
-  const positionList = ['GK','DEF','DEF','MID','ATT']
-
-  homePlayers = homeSquad.slice(0, 5).map((p, i) => ({
-    idx: i, name: p.name, pos: positionList[i] || 'MID',
-    x: homeFormPos[i][0], y: homeFormPos[i][1],
-    baseX: homeFormPos[i][0], baseY: homeFormPos[i][1],
-    pace: p.pace || 75, shooting: p.shooting || 70,
-    passing: p.passing || 70, defending: p.defending || 65,
-    team: 'home', hasBall: false, sprintTimer: 0,
-    vx: 0, vy: 0,
-  }))
-
-  awayPlayers = awaySquad.slice(0, 5).map((p, i) => ({
-    idx: i, name: p.name, pos: positionList[i] || 'MID',
-    x: awayFormPos[i][0], y: awayFormPos[i][1],
-    baseX: awayFormPos[i][0], baseY: awayFormPos[i][1],
-    pace: p.pace || 75, shooting: p.shooting || 70,
-    passing: p.passing || 70, defending: p.defending || 65,
-    team: 'away', hasBall: false, sprintTimer: 0,
-    vx: 0, vy: 0,
-  }))
-
-  ball = { x: 30, y: 20, vx: 0, vy: 0 }
-  controlledId = nearestHomeToPoint(30, 20)
-  sprintCooldown = 0
-  goalFlash = 0
-  gamePaused = false
-  overlay.value = null
-
-  phase.value = 'match'
-  nextTick(() => {
-    ctx = canvasRef.value.getContext('2d')
-    startLoop()
-    startRenderLoop()
-  })
+  gameSec.value   = 0
+  await new Promise(r => setTimeout(r, 50))
+  initStreetThree()
 }
 
-// ── Keyboard ──────────────────────────────────────────────────────────────────
-function onKeyDown(e) {
-  switch (e.code) {
-    case 'ArrowUp':    keys.up    = true; e.preventDefault(); break
-    case 'ArrowDown':  keys.down  = true; e.preventDefault(); break
-    case 'ArrowLeft':  keys.left  = true; e.preventDefault(); break
-    case 'ArrowRight': keys.right = true; e.preventDefault(); break
-    case 'Space':      if (!keyLatch.space) { keys.space = true; keyLatch.space = true } e.preventDefault(); break
-    case 'KeyZ':       if (!keyLatch.z) { keys.z = true; keyLatch.z = true } e.preventDefault(); break
-    case 'KeyX':       keys.x = true; e.preventDefault(); break
-    case 'KeyS':       if (!keyLatch.s) { keys.s = true; keyLatch.s = true } e.preventDefault(); break
-    case 'Escape':     togglePause(); e.preventDefault(); break
-    case 'Enter':      if (overlay.value?.action) overlay.value.action(); e.preventDefault(); break
+function initStreetThree() {
+  const canvas = threeCanvas.value
+  const s      = createScene(canvas)
+  renderer = s.renderer
+  scene    = s.scene
+  renderer.setClearColor(0x0a0a0a)
+
+  // Street camera — lower angle, tighter
+  camera = new THREE.PerspectiveCamera(65, canvas.clientWidth / canvas.clientHeight, 0.1, 300)
+  camera.position.set(0, 20, 42)
+  camera.lookAt(0, 0, 0)
+
+  buildStreetPitch()
+  ball = createBall(scene, 0xff6600)  // orange ball
+  spawnStreetPlayers()
+
+  window.addEventListener('resize', resizeHandler)
+  window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup',   onKeyUp)
+
+  showOverlay({ title: 'STREET FOOTBALL', sub: myTeam.value + ' vs ' + oppTeam.value,
+                cls: 'overlay-kickoff', btn: 'Play', action: dismissOverlay })
+
+  clock.start()
+  tick()
+}
+
+function buildStreetPitch() {
+  // Asphalt floor
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(SPW, SPL),
+    new THREE.MeshLambertMaterial({ color: 0x2a2a2a })
+  )
+  floor.rotation.x = -Math.PI / 2
+  floor.receiveShadow = true
+  scene.add(floor)
+
+  // Line markings
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff })
+  function addLine(w, l, x, z) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, l), lineMat)
+    m.rotation.x = -Math.PI / 2
+    m.position.set(x, 0.02, z)
+    scene.add(m)
   }
+  const LW = 0.1
+  addLine(SPW, LW, 0, -SPL / 2)
+  addLine(SPW, LW, 0,  SPL / 2)
+  addLine(LW, SPL, -SPW / 2, 0)
+  addLine(LW, SPL,  SPW / 2, 0)
+  addLine(SPW, LW, 0, 0)  // halfway
+
+  // Cage walls
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0x444444, transparent: true, opacity: 0.6, wireframe: true })
+  const wallH = 4
+  function addWall(w, l, x, z) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, l), wallMat)
+    m.position.set(x, wallH / 2, z)
+    scene.add(m)
+  }
+  addWall(SPW + 1, 0.3, 0, -SPL / 2 - 0.15)
+  addWall(SPW + 1, 0.3, 0,  SPL / 2 + 0.15)
+  addWall(0.3, SPL + 1, -SPW / 2 - 0.15, 0)
+  addWall(0.3, SPL + 1,  SPW / 2 + 0.15, 0)
+
+  // Goals (smaller)
+  const postMat = new THREE.MeshLambertMaterial({ color: 0xffffff })
+  for (const sign of [-1, 1]) {
+    const gz = sign * SPL / 2
+    function post(w, h, d, px, py, pz) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), postMat)
+      m.position.set(px, py, gz + pz)
+      scene.add(m)
+    }
+    const GW = 4, GH = 1.8
+    post(0.08, GH, 0.08, -GW / 2, GH / 2, 0)
+    post(0.08, GH, 0.08,  GW / 2, GH / 2, 0)
+    post(GW, 0.08, 0.08, 0, GH, 0)
+  }
+
+  // Sodium overhead lights
+  const lightMat = new THREE.MeshBasicMaterial({ color: 0xffcc66 })
+  for (let i = -1; i <= 1; i += 2) {
+    for (let j = -1; j <= 1; j += 2) {
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(1, 0.2, 1), lightMat)
+      lamp.position.set(i * SPW * 0.4, 12, j * SPL * 0.4)
+      scene.add(lamp)
+
+      const pt = new THREE.PointLight(0xffaa44, 60, 40)
+      pt.position.set(i * SPW * 0.4, 11, j * SPL * 0.4)
+      pt.castShadow = true
+      scene.add(pt)
+    }
+  }
+}
+
+function spawnStreetPlayers() {
+  playerObjects = []
+  const homePos = [[0, -18], [-6, -10], [0, -12], [6, -10], [0, -6]]
+  const awayPos = homePos.map(([x, z]) => [-x, -z])
+
+  homePos.forEach(([x, z], i) => {
+    const m = createPlayerModel(myTeam.value, i === 0, i % 8)
+    m.position.set(x, 0, z)
+    scene.add(m)
+    playerObjects.push({ group: m, team: 'home', isGK: i === 0, state: 'idle', idx: i })
+  })
+  awayPos.forEach(([x, z], i) => {
+    const m = createPlayerModel(oppTeam.value, i === 0, (i + 4) % 8)
+    m.position.set(x, 0, z)
+    scene.add(m)
+    playerObjects.push({ group: m, team: 'away', isGK: i === 0, state: 'idle', idx: i })
+  })
+  controlledIdx = 0
+}
+
+function tick() {
+  animId = requestAnimationFrame(tick)
+  const dt = Math.min(clock.getDelta(), 0.05)
+  if (!overlay.value) {
+    gameSec.value += dt
+    updateStreetMatch(dt)
+  }
+  resizeRenderer(renderer, camera, threeCanvas.value)
+  renderer.render(scene, camera)
+}
+
+function updateStreetMatch(dt) {
+  autoSwitch()
+  const cp = playerObjects[controlledIdx]
+  if (cp) movePlayer(cp, dt)
+  playerObjects.forEach((p, i) => {
+    if (p.team === 'home' && i === controlledIdx) return
+    streetAI(p, dt)
+  })
+  stepBallPhysics(ball, dt, { wallBounce: true, wallX: SPW / 2 - 0.3, wallZ: SPL / 2 - 0.3 })
+
+  // Goal check (smaller goals)
+  const bx = ball.position.x, bz = ball.position.z, by = ball.position.y
+  if (Math.abs(bx) < 2 && by < 1.8) {
+    if (bz < -SPL / 2) { awayScore.value++; onGoal('home') }
+    if (bz >  SPL / 2) { homeScore.value++; onGoal('away') }
+  }
+
+  if (homeScore.value >= 3 || awayScore.value >= 3 || gameSec.value >= MATCH_SECS) {
+    onFullTime()
+  }
+}
+
+function autoSwitch() {
+  let best = controlledIdx, bestDist = Infinity
+  playerObjects.forEach((p, i) => {
+    if (p.team !== 'home') return
+    const d = p.group.position.distanceTo(ball.position)
+    if (d < bestDist) { bestDist = d; best = i }
+  })
+  controlledIdx = best
+}
+
+function movePlayer(p, dt) {
+  const spd = keys['x'] ? 9 : 5.5
+  let dx = 0, dz = 0
+  if (keys['ArrowUp'])    dz = -1
+  if (keys['ArrowDown'])  dz = 1
+  if (keys['ArrowLeft'])  dx = -1
+  if (keys['ArrowRight']) dx = 1
+  if (dx || dz) {
+    const l = Math.sqrt(dx*dx + dz*dz)
+    p.group.position.x += (dx/l) * spd * dt
+    p.group.position.z += (dz/l) * spd * dt
+    p.group.rotation.y = Math.atan2(dx, dz)
+    p.state = keys['x'] ? 'sprint' : 'run'
+  } else { p.state = 'idle' }
+  p.group.position.x = THREE.MathUtils.clamp(p.group.position.x, -SPW/2+1, SPW/2-1)
+  p.group.position.z = THREE.MathUtils.clamp(p.group.position.z, -SPL/2+1, SPL/2-1)
+  if (keys[' '] && !keys._passDone) {
+    keys._passDone = true
+    const d = new THREE.Vector3(ball.position.x - p.group.position.x, 0, ball.position.z - p.group.position.z).normalize()
+    kickBall(ball, d, 0.6, 0.1)
+    p.state = 'kick'
+  }
+  if (keys['z'] && !keys._shootDone) {
+    keys._shootDone = true
+    const gz = -SPL / 2
+    const d = new THREE.Vector3((Math.random()-0.5)*2 - p.group.position.x, 0, gz - p.group.position.z).normalize()
+    kickBall(ball, d, 0.95, 0.25)
+    p.state = 'kick'
+  }
+  animatePlayer(p.group, p.state, dt)
+}
+
+function streetAI(p, dt) {
+  const bp = ball.position, pp = p.group.position
+  const dist = pp.distanceTo(bp)
+  if (p.team === 'away') {
+    const dir = new THREE.Vector3(bp.x - pp.x, 0, bp.z - pp.z).normalize()
+    if (dist > 1.5) {
+      p.group.position.x += dir.x * 5 * dt
+      p.group.position.z += dir.z * 5 * dt
+      p.state = 'run'
+    } else {
+      const gz = SPL / 2
+      const d = new THREE.Vector3((Math.random()-0.5)*2, 0, gz - pp.z).normalize()
+      kickBall(ball, d, 0.85, 0.2)
+      p.state = 'kick'
+    }
+  } else {
+    const tz = new THREE.Vector3(bp.x * 0.3, 0, THREE.MathUtils.clamp(bp.z * 0.4 - p.idx * 4, -SPL/2, SPL/2))
+    const d2 = pp.distanceTo(tz)
+    if (d2 > 2) {
+      const dir2 = tz.clone().sub(pp).normalize()
+      p.group.position.x += dir2.x * 4 * dt
+      p.group.position.z += dir2.z * 4 * dt
+      p.state = 'run'
+    } else { p.state = 'idle' }
+  }
+  p.group.position.x = THREE.MathUtils.clamp(p.group.position.x, -SPW/2+1, SPW/2-1)
+  p.group.position.z = THREE.MathUtils.clamp(p.group.position.z, -SPL/2+1, SPL/2-1)
+  animatePlayer(p.group, p.state, dt)
+}
+
+function onGoal(side) {
+  showOverlay({ title: side === 'away' ? `⚽ GOAL! ${myTeam.value}!` : `⚽ GOAL! ${oppTeam.value}!`,
+                sub: `${homeScore.value} – ${awayScore.value}`, cls: 'overlay-goal' })
+  setTimeout(() => { dismissOverlay(); resetBall(ball) }, 1800)
+}
+
+function onFullTime() {
+  if (isStoryMode.value && homeScore.value >= 3) {
+    if (!completedChapters.value.includes(storyChapter.value)) {
+      completedChapters.value.push(storyChapter.value)
+    }
+    if (storyChapter.value < 7) storyChapter.value++
+    saveStoryProgress()
+  }
+  showOverlay({ title: homeScore.value >= awayScore.value ? 'You Win!' : 'Final Whistle',
+                sub: `${homeScore.value} – ${awayScore.value}`, cls: 'overlay-fulltime',
+                btn: 'See Result', action: () => { cleanup(); phase.value = 'post' } })
+}
+
+function showOverlay(o) { overlay.value = o }
+function dismissOverlay() { overlay.value = null }
+
+function onKeyDown(e) {
+  keys[e.key] = true
+  if (e.key === ' ') e.preventDefault()
 }
 function onKeyUp(e) {
-  switch (e.code) {
-    case 'ArrowUp':    keys.up    = false; break
-    case 'ArrowDown':  keys.down  = false; break
-    case 'ArrowLeft':  keys.left  = false; break
-    case 'ArrowRight': keys.right = false; break
-    case 'Space':      keys.space = false; keyLatch.space = false; break
-    case 'KeyZ':       keys.z = false; keyLatch.z = false; break
-    case 'KeyX':       keys.x = false; break
-    case 'KeyS':       keys.s = false; keyLatch.s = false; break
-  }
+  keys[e.key] = false
+  if (e.key === ' ') keys._passDone  = false
+  if (e.key === 'z') keys._shootDone = false
 }
 
-// ── Touch Controls ────────────────────────────────────────────────────────────
-function touchStart(key) {
-  keys[key] = true
-  if (key === 'space' && !keyLatch.space) { keyLatch.space = true }
-  if (key === 'z' && !keyLatch.z) { keyLatch.z = true }
-  if (key === 's' && !keyLatch.s) { keyLatch.s = true }
-  if (key === 'escape') { togglePause() }
-}
-function touchEnd(key) {
-  if (key === 'escape') return
-  keys[key] = false
-  if (key === 'space') { keyLatch.space = false }
-  if (key === 'z') { keyLatch.z = false }
-  if (key === 's') { keyLatch.s = false }
+function resizeHandler() {
+  if (!canvasWrap.value || !threeCanvas.value) return
+  const w = canvasWrap.value.clientWidth
+  const h = canvasWrap.value.clientHeight
+  threeCanvas.value.style.width  = w + 'px'
+  threeCanvas.value.style.height = h + 'px'
 }
 
-onMounted(() => {
-  window.addEventListener('keydown', onKeyDown)
-  window.addEventListener('keyup', onKeyUp)
-})
-onUnmounted(() => {
+function cleanup() {
+  if (animId) cancelAnimationFrame(animId)
+  window.removeEventListener('resize', resizeHandler)
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('keyup', onKeyUp)
-  stopGame()
-})
-
-// ── Game Loop ─────────────────────────────────────────────────────────────────
-function startLoop() {
-  loopInterval = setInterval(gameTick, 1000 / FPS)
-}
-function stopGame() {
-  if (loopInterval) { clearInterval(loopInterval); loopInterval = null }
-  if (rafId) { cancelAnimationFrame(rafId); rafId = null }
+  if (renderer) { renderer.dispose(); renderer = null }
 }
 
-function togglePause() {
-  gamePaused = !gamePaused
-  if (gamePaused) {
-    overlay.value = { title: 'PAUSED', subtitle: 'Press Esc to continue', btn: 'Resume', action: togglePause }
-    overlayClass.value = 'overlay-pause'
-  } else {
-    overlay.value = null
-  }
-}
+function goHome()     { cleanup(); router.push('/') }
+function playAgain()  { cleanup(); startStreetMatch() }
 
-// ── Per-Tick Logic ────────────────────────────────────────────────────────────
-function gameTick() {
-  if (gamePaused) return
-  if (goalFlash > 0) { goalFlash--; return }
-
-  tick++
-
-  // ── Check for win conditions ──
-  if (homeScore.value >= WIN_GOALS && homeScore.value > awayScore.value) {
-    endMatch(true)
-    return
-  }
-  if (awayScore.value >= WIN_GOALS && awayScore.value > homeScore.value) {
-    endMatch(false)
-    return
-  }
-
-  // ── Golden goal (after full time) ──
-  if (tick >= GAME_DUR_TICKS) {
-    if (homeScore.value === awayScore.value) {
-      goldenGoal = true
-      tick = GAME_DUR_TICKS
-      return
-    } else {
-      endMatch(homeScore.value > awayScore.value)
-      return
-    }
-  }
-
-  gameMinDisplay.value = Math.min(60, Math.floor(tick / TICKS_PER_GMIN))
-  if (goldenGoal) gameMinDisplay.value = 60
-
-  // ── Input → controlled player ──
-  const cp = homePlayers[controlledId]
-  if (cp) {
-    let spd = SPD_NORMAL
-    if (keys.x && sprintCooldown === 0) {
-      spd = SPD_SPRINT
-      cp.sprintTimer = (cp.sprintTimer || 0) + 1
-      if (cp.sprintTimer > 45) { sprintCooldown = 60; cp.sprintTimer = 0 }
-    } else {
-      if (sprintCooldown > 0) sprintCooldown--
-    }
-
-    const scale = spd * (1 + cp.pace / 200)
-    if (keys.up)    cp.y = clamp(cp.y - scale, 1, PH - 1)
-    if (keys.down)  cp.y = clamp(cp.y + scale, 1, PH - 1)
-    if (keys.left)  cp.x = clamp(cp.x - scale, 1, PW - 1)
-    if (keys.right) cp.x = clamp(cp.x + scale, 1, PW - 1)
-
-    // Ball follows controlled player if they have ball
-    if (cp.hasBall) {
-      ball.x = cp.x + 1.5
-      ball.y = cp.y
-      ball.vx = 0; ball.vy = 0
-    }
-
-    // Pass
-    if (keys.space && cp.hasBall) {
-      keys.space = false; keyLatch.space = false
-      doPass(cp)
-    }
-
-    // Shoot
-    if (keys.z && cp.hasBall) {
-      keys.z = false; keyLatch.z = false
-      doShoot(cp)
-    }
-
-    // Tackle
-    if (keys.s) {
-      keys.s = false; keyLatch.s = false
-      doTackle(cp)
-    }
-  }
-
-  // ── AI non-controlled home players ──
-  homePlayers.forEach((p, i) => {
-    if (i === controlledId) return
-    aiPlayer(p, homePlayers, awayPlayers, 0, PW, false)
-  })
-
-  // ── AI away players ──
-  awayPlayers.forEach(p => {
-    aiPlayer(p, awayPlayers, homePlayers, PW, 0, true)
-  })
-
-  // ── Ball physics ──
-  ball.vx *= FRICTION
-  ball.vy *= FRICTION
-  ball.x += ball.vx
-  ball.y += ball.vy
-
-  // ── Wall bounces ──
-  if (ball.x < BALL_R) { ball.x = BALL_R; ball.vx *= -0.7 }
-  if (ball.x > PW - BALL_R) { ball.x = PW - BALL_R; ball.vx *= -0.7 }
-  if (ball.y < BALL_R) { ball.y = BALL_R; ball.vy *= -0.7 }
-  if (ball.y > PH - BALL_R) { ball.y = PH - BALL_R; ball.vy *= -0.7 }
-
-  // ── Goal detection ──
-  if (ball.x < 1 && ball.y > GOAL_Y1 && ball.y < GOAL_Y2) {
-    awayScore.value++
-    scorers.value.push({ player: nearestTo(awayPlayers, ball).name, minute: gameMinDisplay.value })
-    resetAfterGoal()
-    return
-  }
-  if (ball.x > PW - 1 && ball.y > GOAL_Y1 && ball.y < GOAL_Y2) {
-    homeScore.value++
-    scorers.value.push({ player: nearestTo(homePlayers, ball).name, minute: gameMinDisplay.value })
-    resetAfterGoal()
-    return
-  }
-
-  // ── Ball possession ──
-  homePlayers.forEach(p => {
-    if (dist(p, ball) < CTRL_RAD) {
-      p.hasBall = true
-      awayPlayers.forEach(pp => pp.hasBall = false)
-    } else {
-      p.hasBall = false
-    }
-  })
-  awayPlayers.forEach(p => {
-    if (dist(p, ball) < CTRL_RAD) {
-      p.hasBall = true
-      homePlayers.forEach(pp => pp.hasBall = false)
-    } else {
-      p.hasBall = false
-    }
-  })
-
-  // Switch controlled player to nearest home to ball if lost
-  if (!homePlayers[controlledId] || !homePlayers[controlledId].hasBall) {
-    let nearest = 0
-    let minD = Infinity
-    homePlayers.forEach((p, i) => {
-      const d = dist2(p, ball)
-      if (d < minD) { minD = d; nearest = i }
-    })
-    controlledId = nearest
-  }
-}
-
-function resetAfterGoal() {
-  goalFlash = 120
-  homePlayers.forEach(p => { p.hasBall = false; p.x = p.baseX; p.y = p.baseY; p.vx = 0; p.vy = 0 })
-  awayPlayers.forEach(p => { p.hasBall = false; p.x = p.baseX; p.y = p.baseY; p.vx = 0; p.vy = 0 })
-  ball = { x: 30, y: 20, vx: 0, vy: 0 }
-  controlledId = nearestHomeToPoint(30, 20)
-}
-
-function endMatch(homeWon) {
-  stopGame()
-  if (storyMatchActive.value) {
-    storyMatchActive.value = false
-    showStoryPost(homeWon)
-  } else {
-    phase.value = 'fulltime'
-    result.value = homeWon ? 'Home Win!' : 'Away Win!'
-  }
-}
-
-function doPass(player) {
-  const targets = player.team === 'home' ? homePlayers : awayPlayers
-  let best = null
-  let bestD = Infinity
-  targets.forEach(t => {
-    if (t.idx === player.idx) return
-    const d = dist(player, t)
-    if (d < bestD) { bestD = d; best = t }
-  })
-  if (!best) return
-
-  const dx = best.x - player.x
-  const dy = best.y - player.y
-  const len = Math.sqrt(dx*dx + dy*dy)
-  if (len < 0.1) return
-
-  ball.vx = (dx / len) * PASS_PWR
-  ball.vy = (dy / len) * PASS_PWR
-  player.hasBall = false
-}
-
-function doShoot(player) {
-  const targetX = player.team === 'home' ? PW - 2 : 2
-  const dx = targetX - player.x
-  const dy = (player.team === 'home' ? GOAL_CY : GOAL_CY) - player.y
-  const len = Math.sqrt(dx*dx + dy*dy)
-  if (len < 0.1) return
-
-  ball.vx = (dx / len) * SHOOT_PWR * (1 + player.shooting / 200)
-  ball.vy = (dy / len) * SHOOT_PWR * (1 + player.shooting / 200)
-  player.hasBall = false
-}
-
-function doTackle(player) {
-  const enemies = player.team === 'home' ? awayPlayers : homePlayers
-  enemies.forEach(e => {
-    if (dist(player, e) < TACKLE_RAD) {
-      e.vx *= 0.5
-      e.vy *= 0.5
-      e.hasBall = false
-    }
-  })
-}
-
-function aiPlayer(player, team, enemies, boundL, boundR, isAway) {
-  const targetX = isAway ? 5 : PW - 5
-
-  if (player.hasBall) {
-    // Dribble toward goal or pass
-    if (Math.random() < 0.3) {
-      doPass(player)
-    } else {
-      const dx = targetX - player.x
-      const dy = rnd(-5, 5) - player.y
-      const len = Math.sqrt(dx*dx + dy*dy)
-      if (len > 0.5) {
-        player.vx = (dx / len) * SPD_NORMAL
-        player.vy = (dy / len) * SPD_NORMAL
-      }
-    }
-  } else {
-    // Move to intercept ball
-    const dx = ball.x - player.x
-    const dy = ball.y - player.y
-    const d = Math.sqrt(dx*dx + dy*dy)
-
-    if (d < 15) {
-      const spd = SPD_NORMAL * (1 + player.pace / 200)
-      player.vx = (dx / d) * spd
-      player.vy = (dy / d) * spd
-    } else {
-      // Patrol
-      player.vx *= 0.95
-      player.vy *= 0.95
-    }
-  }
-
-  // Apply movement
-  player.x += player.vx
-  player.y += player.vy
-
-  // Pitch bounds
-  player.x = clamp(player.x, 1, PW - 1)
-  player.y = clamp(player.y, 1, PH - 1)
-}
-
-function nearestHomeToPoint(x, y) {
-  let nearest = 0
-  let minD = Infinity
-  homePlayers.forEach((p, i) => {
-    const d = (p.x - x) ** 2 + (p.y - y) ** 2
-    if (d < minD) { minD = d; nearest = i }
-  })
-  return nearest
-}
-
-function nearestTo(players, point) {
-  let best = players[0]
-  let minD = Infinity
-  players.forEach(p => {
-    const d = dist2(p, point)
-    if (d < minD) { minD = d; best = p }
-  })
-  return best
-}
-
-// ── Render Loop ───────────────────────────────────────────────────────────────
-function startRenderLoop() {
-  function render() {
-    if (!ctx) return
-    ctx.fillStyle = '#3a3a3a'
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H)
-
-    // Pitch markings (minimal for street style)
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)'
-    ctx.lineWidth = 1
-    ctx.strokeRect(BALL_R * SCALE, BALL_R * SCALE, (PW - 2 * BALL_R) * SCALE, (PH - 2 * BALL_R) * SCALE)
-
-    // Centre line
-    ctx.beginPath()
-    ctx.moveTo((PW / 2) * SCALE, 0)
-    ctx.lineTo((PW / 2) * SCALE, CANVAS_H)
-    ctx.stroke()
-
-    // Goals (as boxes)
-    ctx.fillStyle = 'rgba(255, 200, 0, 0.15)'
-    ctx.fillRect(0, GOAL_Y1 * SCALE, 2 * SCALE, (GOAL_Y2 - GOAL_Y1) * SCALE)
-    ctx.fillRect((PW - 2) * SCALE, GOAL_Y1 * SCALE, 2 * SCALE, (GOAL_Y2 - GOAL_Y1) * SCALE)
-
-    // Players
-    const drawPlayer = (p, teamColor) => {
-      ctx.fillStyle = teamColor
-      ctx.beginPath()
-      ctx.arc(p.x * SCALE, p.y * SCALE, PLAYER_R * SCALE, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.fillStyle = '#000'
-      ctx.font = 'bold 8px Arial'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(p.idx + 1, p.x * SCALE, p.y * SCALE)
-    }
-    homePlayers.forEach(p => drawPlayer(p, '#ef4444'))
-    awayPlayers.forEach(p => drawPlayer(p, '#3b82f6'))
-
-    // Ball
-    ctx.fillStyle = '#fbbf24'
-    ctx.beginPath()
-    ctx.arc(ball.x * SCALE, ball.y * SCALE, BALL_R * SCALE, 0, Math.PI * 2)
-    ctx.fill()
-
-    // Goal flash
-    if (goalFlash > 0) {
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.4 * (goalFlash / 120)})`
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H)
-    }
-
-    rafId = requestAnimationFrame(render)
-  }
-  rafId = requestAnimationFrame(render)
-}
+onMounted(() => { loadClubs(); loadStoryChapters(); loadStoryProgress() })
+onBeforeUnmount(() => { cleanup() })
 </script>
 
 <style scoped>
-.street-view {
-  min-height: 100vh;
-  background: #0a0a0a;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── SCREENS ── */
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-}
-
-.select-screen {
-  background: linear-gradient(180deg, #0d1117 0%, #111820 100%);
-}
-
-.ft-screen {
-  background: linear-gradient(180deg, #0d1117 0%, #111820 100%);
-}
-
-.screen-header {
-  text-align: center;
-  margin-bottom: 30px;
-  width: 100%;
-}
-
-.screen-header h1 {
-  font-size: 28px;
-  color: #fff;
-  margin: 10px 0;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.screen-header p {
-  color: #888;
-  font-size: 12px;
-  margin: 0;
-  letter-spacing: 1px;
-}
-
-.back-btn {
-  background: #333;
-  color: #ccc;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  margin-bottom: 20px;
-}
-
-.back-btn:hover {
-  background: #444;
-  color: #fff;
-}
-
-/* ── TEAM PICKERS ── */
-.team-pickers {
-  display: flex;
-  gap: 40px;
-  width: 100%;
-  max-width: 1000px;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.picker-col {
-  flex: 1;
-  min-width: 200px;
-}
-
-.picker-title {
-  font-size: 14px;
-  color: #fff;
-  text-align: center;
-  margin: 0 0 16px 0;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.club-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.club-btn {
-  background: #1a2535;
-  border: 2px solid #2a3a50;
-  color: #ccc;
-  padding: 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-  font-size: 12px;
-}
-
-.club-btn:hover:not(:disabled) {
-  background: #2a3a50;
-  border-color: #3a5a80;
-  color: #fff;
-  transform: translateX(4px);
-}
-
-.club-btn.selected {
-  background: #2980b9;
-  border-color: #3498db;
-  color: #fff;
-  font-weight: bold;
-}
-
-.club-btn.blocked {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.club-btn:disabled {
-  cursor: not-allowed;
-}
-
-.club-name {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 2px;
-}
-
-.club-league {
-  display: block;
-  font-size: 10px;
-  opacity: 0.7;
-}
-
-.vs-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-
-.vs-badge {
-  font-size: 18px;
-  font-weight: bold;
-  color: #e67e22;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.kickoff-btn {
-  background: linear-gradient(135deg, #e67e22, #c0392b);
-  color: #fff;
-  border: none;
-  padding: 16px 24px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 15px rgba(230, 126, 34, 0.4);
-  transition: all 0.2s ease;
-}
-
-.kickoff-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(230, 126, 34, 0.6);
-}
-
-.kickoff-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ── MATCH WRAPPER ── */
-.match-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #0a0a0a;
-  gap: 12px;
-  padding: 12px;
-  min-height: 100vh;
-}
-
-.scorebar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  max-width: 700px;
-  background: #111;
-  border-radius: 4px;
-  padding: 12px;
-  gap: 20px;
-}
-
-.sb-team {
-  flex: 1;
-  text-align: left;
-  font-size: 14px;
-  font-weight: bold;
-  color: #ccc;
-}
-
-.sb-team.away {
-  text-align: right;
-}
-
-.sb-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.sb-score {
-  font-size: 24px;
-  font-weight: bold;
-  color: #fff;
-  font-family: 'Courier New', monospace;
-}
-
-.sb-time {
-  font-size: 12px;
-  color: #888;
-}
-
-/* ── CANVAS ── */
-.canvas-wrap {
-  position: relative;
-  max-width: 700px;
-  width: 100%;
-}
-
-canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  background: #1a1a1a;
-  border-radius: 4px;
-}
-
-.overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 4px;
-  z-index: 100;
-}
-
-.overlay-content {
-  background: #111;
-  border: 2px solid #333;
-  border-radius: 8px;
-  padding: 30px;
-  text-align: center;
-}
-
-.overlay-title {
-  font-size: 28px;
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.overlay-sub {
-  font-size: 13px;
-  color: #aaa;
-  margin-bottom: 20px;
-}
-
-.overlay-btn {
-  background: #2980b9;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.overlay-btn:hover {
-  background: #3498db;
-}
-
-/* ── CONTROLS BAR ── */
-.controls-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  width: 100%;
-  max-width: 700px;
-  background: #111;
-  padding: 12px;
-  border-radius: 4px;
-  flex-wrap: wrap;
-  font-size: 11px;
-  color: #888;
-}
-
-kbd {
-  background: #222;
-  border: 1px solid #444;
-  padding: 2px 6px;
-  border-radius: 2px;
-  font-family: 'Courier New', monospace;
-  color: #fff;
-}
-
-.touch-toggle-btn {
-  background: #333;
-  color: #ccc;
-  border: 1px solid #444;
-  padding: 6px 12px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 11px;
-  margin-left: auto;
-}
-
-.touch-toggle-btn:hover {
-  background: #444;
-  color: #fff;
-}
-
-/* ── TOUCH CONTROLS ── */
-.touch-controls {
-  width: 100%;
-  max-width: 700px;
-  background: #111;
-  border-radius: 4px;
-  padding: 12px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.touch-dpad {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  justify-self: center;
-  width: fit-content;
-}
-
-.dpad-row {
-  display: flex;
-  gap: 2px;
-}
-
-.touch-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.action-row {
-  display: flex;
-  gap: 4px;
-}
-
-.touch-btn {
-  background: #2a2a2a;
-  color: #fff;
-  border: 1px solid #444;
-  padding: 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: bold;
-  min-width: 48px;
-  transition: all 0.1s ease;
-}
-
-.touch-btn:active {
-  background: #3a5a80;
-  border-color: #4a7aaa;
-  transform: scale(0.95);
-}
-
-.touch-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.dpad-center {
-  cursor: default !important;
-}
-
-.action-pass { flex: 1; }
-.action-shoot { flex: 1; }
-.action-sprint { flex: 1; }
-.action-tackle { flex: 1; }
-.action-pause { flex: 1; }
-
-/* ── FULL TIME CARD ── */
-.ft-card {
-  background: #111;
-  border: 2px solid #333;
-  border-radius: 8px;
-  padding: 40px;
-  max-width: 400px;
-  text-align: center;
-}
-
-.ft-card h2 {
-  font-size: 28px;
-  color: #fff;
-  margin: 0 0 20px 0;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.ft-score {
-  font-size: 48px;
-  font-weight: bold;
-  color: #ffd700;
-  font-family: 'Courier New', monospace;
-  margin-bottom: 12px;
-}
-
-.ft-teams {
-  font-size: 13px;
-  color: #888;
-  margin-bottom: 20px;
-}
-
-.ft-scorers {
-  background: #1a1a1a;
-  border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 20px;
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-.ft-scorer {
-  font-size: 12px;
-  color: #aaa;
-  padding: 4px 0;
-  border-bottom: 1px solid #222;
-}
-
-.ft-scorer:last-child {
-  border-bottom: none;
-}
-
-.ft-min {
-  float: right;
-  color: #666;
-}
-
-/* ── MODE TABS ── */
-.mode-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 28px;
-  border-bottom: 2px solid #222;
-  padding-bottom: 12px;
-}
-
-.mode-tab {
-  background: transparent;
-  border: 1px solid #333;
-  color: #888;
-  padding: 8px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: all 0.15s;
-}
-
-.mode-tab:hover {
-  color: #fff;
-  border-color: #555;
-}
-
-.mode-tab.active {
-  background: #e67e22;
-  border-color: #e67e22;
-  color: #fff;
-}
-
-/* ── STORY MATCH BADGE ── */
-.story-match-badge {
-  background: #1a2535;
-  border: 1px solid #2a3a50;
-  color: #8ab0d0;
-  font-size: 11px;
-  padding: 6px 14px;
-  border-radius: 4px;
-  text-align: center;
-  width: 100%;
-  max-width: 700px;
-  letter-spacing: 0.5px;
-}
-
-/* ── CHARACTER CREATION ── */
-.story-create-screen {
-  background: linear-gradient(180deg, #0a0f14 0%, #0d1520 100%);
-}
-
-.create-card {
-  background: #0f1520;
-  border: 1px solid #1e2d40;
-  border-radius: 10px;
-  padding: 40px 32px;
-  max-width: 500px;
-  width: 100%;
-  text-align: center;
-}
-
-.create-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
-}
-
-.create-title {
-  font-size: 22px;
-  color: #fff;
-  margin: 0 0 10px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.create-sub {
-  color: #778899;
-  font-size: 13px;
-  line-height: 1.6;
-  margin-bottom: 24px;
-}
-
-.name-input {
-  width: 100%;
-  background: #1a2535;
-  border: 2px solid #2a3a50;
-  color: #fff;
-  padding: 14px 16px;
-  border-radius: 6px;
-  font-size: 16px;
-  text-align: center;
-  font-family: inherit;
-  letter-spacing: 1px;
-  box-sizing: border-box;
-  margin-bottom: 24px;
-  transition: border-color 0.2s;
-}
-
-.name-input:focus {
-  outline: none;
-  border-color: #e67e22;
-}
-
-.name-input::placeholder {
-  color: #445566;
-}
-
-.create-rival-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: #778899;
-  margin-bottom: 12px;
-}
-
-.create-rival-choices {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.create-rival-btn {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  background: #1a2535;
-  border: 2px solid #2a3a50;
-  color: #ccc;
-  padding: 14px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s;
-}
-
-.create-rival-btn:hover {
-  border-color: #3a5a80;
-  color: #fff;
-}
-
-.create-rival-btn.active {
-  border-color: #e67e22;
-  background: #1e2d1a;
-}
-
-.crb-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.crb-title {
-  display: block;
-  font-weight: bold;
-  color: #fff;
-  font-size: 13px;
-  margin-bottom: 4px;
-}
-
-.crb-desc {
-  display: block;
-  font-size: 11px;
-  color: #778899;
-  line-height: 1.4;
-}
-
-/* ── STORY HUB ── */
-.story-hub-screen {
-  background: linear-gradient(180deg, #0a0f14 0%, #0d1520 100%);
-  align-items: stretch;
-}
-
-.story-hub-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  padding: 0 20px 40px;
-  width: 100%;
-  max-width: 660px;
-  margin: 0 auto;
-}
-
-.chapter-map {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.story-ch-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #0f1a28;
-  border: 1px solid #1e2d40;
-  border-radius: 6px;
-  padding: 14px 16px;
-  cursor: pointer;
-  transition: all 0.15s;
-  position: relative;
-}
-
-.story-ch-row.ch-current {
-  border-color: #e67e22;
-  background: #1a1a0a;
-}
-
-.story-ch-row.ch-completed {
-  border-color: #2d5a2d;
-  background: #0d1a0d;
-}
-
-.story-ch-row.ch-locked {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.story-ch-row:not(.ch-locked):hover {
-  border-color: #3a5a80;
-  transform: translateX(4px);
-}
-
-.ch-num-badge {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #2a3a50;
-  color: #aaa;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 13px;
-  flex-shrink: 0;
-}
-
-.ch-completed .ch-num-badge { background: #2d5a2d; color: #6fdf6f; }
-.ch-current   .ch-num-badge { background: #5a3a0a; color: #e67e22; }
-
-.ch-body { flex: 1; min-width: 0; }
-
-.ch-city-line {
-  font-size: 13px;
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 2px;
-}
-
-.ch-country { color: #778899; font-weight: normal; }
-
-.ch-title-line {
-  font-size: 11px;
-  color: #e67e22;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 3px;
-}
-
-.ch-loc-line {
-  font-size: 10px;
-  color: #556677;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ch-status-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.story-hub-footer {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.story-progress-bar {
-  width: 100%;
-  height: 4px;
-  background: #1e2d40;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.spb-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #e67e22, #f39c12);
-  border-radius: 2px;
-  transition: width 0.5s ease;
-}
-
-.story-progress-label {
-  font-size: 11px;
-  color: #778899;
-  letter-spacing: 1px;
-}
-
-.reset-btn {
-  background: transparent;
-  border: 1px solid #5a2020;
-  color: #c0392b;
-  padding: 6px 14px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  transition: all 0.15s;
-}
-
-.reset-btn:hover { background: #5a2020; color: #fff; }
-
-/* ── STORY INTRO ── */
-.story-intro-screen {
-  background: linear-gradient(180deg, #0a0f14 0%, #0d1520 100%);
-}
-
-.story-intro-card {
-  background: #0f1520;
-  border: 1px solid #1e2d40;
-  border-radius: 10px;
-  padding: 32px;
-  max-width: 600px;
-  width: 100%;
-}
-
-.si-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.si-chapter-label {
-  font-size: 11px;
-  color: #778899;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-}
-
-.si-title {
-  font-size: 20px;
-  color: #fff;
-  margin: 0 0 8px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.si-location {
-  font-size: 11px;
-  color: #556677;
-  margin-bottom: 20px;
-  letter-spacing: 0.5px;
-}
-
-.si-narrative {
-  color: #b0c4d8;
-  font-size: 13px;
-  line-height: 1.8;
-  margin-bottom: 20px;
-}
-
-.si-narrative p {
-  margin: 0 0 12px;
-}
-
-.si-narrative p:last-child {
-  margin-bottom: 0;
-  font-style: italic;
-  color: #d0d8e0;
-}
-
-.si-objective {
-  background: #0a1520;
-  border-left: 3px solid #e67e22;
-  padding: 12px 16px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.obj-icon { font-size: 14px; }
-
-.obj-text {
-  font-size: 12px;
-  color: #d0a060;
-  line-height: 1.5;
-}
-
-.si-versus {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding: 12px;
-  background: #0a1520;
-  border-radius: 4px;
-}
-
-.si-vs-you  { font-size: 14px; font-weight: bold; color: #ef4444; }
-.si-vs-badge { font-size: 11px; color: #556677; text-transform: uppercase; letter-spacing: 2px; }
-.si-vs-them { font-size: 14px; font-weight: bold; color: #3b82f6; }
-
-.si-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.sim-btn {
-  background: #1a2535;
-  border: 1px solid #2a3a50;
-  color: #8ab0d0;
-  padding: 12px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: all 0.15s;
-}
-
-.sim-btn:hover {
-  background: #2a3a50;
-  color: #fff;
-}
-
-/* ── STORY POST-MATCH ── */
-.story-post-screen {
-  background: linear-gradient(180deg, #0a0f14 0%, #0d1520 100%);
-}
-
-.story-post-card {
-  background: #0f1520;
-  border: 1px solid #1e2d40;
-  border-radius: 10px;
-  padding: 36px 32px;
-  max-width: 560px;
-  width: 100%;
-  text-align: center;
-}
-
-.spc-result {
-  font-size: 32px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 4px;
-  margin-bottom: 12px;
-}
-
-.spc-win  { color: #6fdf6f; }
-.spc-loss { color: #c0392b; }
-
-.spc-score {
-  font-size: 48px;
-  font-weight: bold;
-  color: #ffd700;
-  font-family: 'Courier New', monospace;
-  margin-bottom: 8px;
-}
-
-.spc-city {
-  font-size: 11px;
-  color: #556677;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 20px;
-}
-
-.spc-narrative {
-  color: #b0c4d8;
-  font-size: 13px;
-  line-height: 1.8;
-  text-align: left;
-  margin-bottom: 28px;
-  background: #0a1520;
-  padding: 16px;
-  border-radius: 6px;
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-.spc-narrative p {
-  margin: 0 0 12px;
-}
-
-.spc-narrative p:last-child {
-  margin-bottom: 0;
-  font-style: italic;
-  color: #d0d8e0;
-}
-
-.spc-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ── STORY COMPLETE ── */
-.story-end-screen {
-  background: radial-gradient(ellipse at center, #1a1a0a 0%, #0a0a0a 70%);
-}
-
-.story-end-card {
-  text-align: center;
-  padding: 40px 20px;
-  max-width: 480px;
-}
-
-.sec-trophy {
-  font-size: 72px;
-  margin-bottom: 20px;
-  animation: trophy-pulse 2s ease-in-out infinite;
-}
-
-@keyframes trophy-pulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.08); }
-}
-
-.sec-title {
-  font-size: 36px;
-  color: #ffd700;
-  text-transform: uppercase;
-  letter-spacing: 4px;
-  margin: 0 0 12px;
-}
-
-.sec-sub {
-  color: #aaa;
-  font-size: 14px;
-  line-height: 1.8;
-  margin-bottom: 20px;
-}
-
-.sec-name {
-  font-size: 15px;
-  color: #e67e22;
-  font-weight: bold;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin-bottom: 32px;
-}
-
-.sec-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ── RESPONSIVE ── */
-@media (max-width: 900px) {
-  .team-pickers {
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .screen-header h1 {
-    font-size: 20px;
-  }
-
-  .match-wrapper {
-    padding: 8px;
-  }
-
-  .touch-controls {
-    grid-template-columns: 1fr;
-  }
-}
+.street-view { min-height: 100vh; background: #0a0a0a; display: flex; flex-direction: column; }
+.screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px; }
+.screen-header { text-align: center; margin-bottom: 20px; }
+.screen-header h1 { font-size: 26px; color: #ff6600; margin: 0 0 6px; }
+.screen-header p  { color: #555; font-size: 11px; letter-spacing: 2px; }
+.back-btn { background: none; border: 1px solid #333; color: #777; padding: 6px 14px; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }
+.back-btn:hover { color: #fff; }
+
+.mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.mode-tab { padding: 8px 24px; border-radius: 6px; border: 1px solid #333; background: #111; color: #666; cursor: pointer; font-size: 13px; font-weight: 700; }
+.mode-tab.active { background: #ff6600; border-color: #ff6600; color: #fff; }
+
+.team-pickers { display: flex; gap: 20px; width: 100%; max-width: 800px; }
+.picker-col { flex: 1; }
+.picker-title { font-size: 12px; color: #ff6600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; text-align: center; }
+.vs-col { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding-top: 40px; }
+.vs-badge { font-size: 28px; font-weight: 900; color: #333; }
+
+.club-grid { display: flex; flex-direction: column; gap: 5px; }
+.club-btn { background: #111820; border: 1px solid #1e2535; color: #aaa; padding: 8px 12px; border-radius: 5px; cursor: pointer; text-align: left; font-size: 12px; }
+.club-btn.selected { background: #2a1a00; border-color: #ff6600; color: #fff; }
+.club-btn.blocked { opacity: 0.3; cursor: not-allowed; }
+.club-name { font-size: 12px; font-weight: 600; }
+.kickoff-btn { background: linear-gradient(135deg, #ff6600, #c0392b); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; }
+.kickoff-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Story */
+.story-hub { width: 100%; max-width: 700px; }
+.story-intro { background: #111820; border: 1px solid #1e2535; border-radius: 12px; padding: 32px; text-align: center; }
+.story-intro h2 { color: #ff6600; margin-bottom: 10px; }
+.story-intro p  { color: #667; margin-bottom: 20px; font-size: 13px; }
+.name-input { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 15px; width: 100%; margin-bottom: 16px; }
+.rival-choice { margin-bottom: 20px; text-align: left; }
+.rival-choice p { color: #888; font-size: 12px; margin-bottom: 8px; }
+.rival-btn { display: block; width: 100%; padding: 10px 14px; margin-bottom: 6px; background: #0a0a0a; border: 1px solid #333; color: #888; border-radius: 6px; text-align: left; cursor: pointer; font-size: 12px; }
+.rival-btn.selected { border-color: #ff6600; color: #ff6600; background: #1a0a00; }
+
+.story-header { margin-bottom: 16px; text-align: center; }
+.story-name { font-size: 18px; font-weight: 900; color: #fff; }
+.story-progress { font-size: 11px; color: #888; margin-top: 4px; }
+.story-bar { width: 100%; height: 4px; background: #1a1a1a; border-radius: 2px; margin-top: 6px; }
+.story-fill { height: 100%; background: #ff6600; border-radius: 2px; transition: width 0.4s; }
+
+.chapters-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.chapter-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; border: 1px solid #1e2535; background: #111820; }
+.chapter-card.done    { border-color: #2a4a2a; background: #0a1a0a; }
+.chapter-card.current { border-color: #ff6600; background: #1a0a00; }
+.chapter-card.locked  { opacity: 0.4; }
+.ch-num { width: 28px; height: 28px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; color: #fff; flex-shrink: 0; }
+.ch-info { flex: 1; }
+.ch-city  { font-size: 10px; color: #667; letter-spacing: 1px; text-transform: uppercase; }
+.ch-title { font-size: 13px; color: #ccc; font-weight: 600; }
+.ch-status { font-size: 16px; }
+.story-actions { display: flex; gap: 10px; justify-content: center; }
+.reset-btn { background: none; border: 1px solid #333; color: #666; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+
+/* Match */
+.match-wrapper { flex: 1; display: flex; flex-direction: column; background: #000; }
+.scorebar { display: flex; align-items: center; justify-content: space-between; padding: 8px 20px; background: rgba(0,0,0,.9); border-bottom: 1px solid #1a1a1a; }
+.sb-team { font-size: 12px; color: #aaa; font-weight: 600; }
+.sb-team.away { text-align: right; }
+.sb-center { display: flex; flex-direction: column; align-items: center; }
+.sb-score { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: 4px; }
+.sb-time  { font-size: 10px; color: #ffd700; }
+.sb-target { font-size: 9px; color: #ff6600; letter-spacing: 1px; }
+.canvas-wrap { flex: 1; position: relative; min-height: 380px; overflow: hidden; }
+.three-canvas { width: 100%; height: 100%; display: block; }
+.cam-label { position: absolute; top: 8px; left: 12px; font-size: 10px; color: rgba(255,255,255,.4); letter-spacing: 1px; pointer-events: none; }
+.controls-bar { display: flex; gap: 14px; padding: 7px 14px; background: #050505; border-top: 1px solid #111; font-size: 10px; color: #445; flex-wrap: wrap; }
+kbd { background: #1a1a2a; border: 1px solid #333; border-radius: 3px; padding: 1px 5px; font-size: 9px; color: #888; }
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.7); z-index: 20; }
+.overlay-goal     { background: rgba(0,40,0,.8); }
+.overlay-fulltime { background: rgba(30,10,0,.85); }
+.overlay-kickoff  { background: rgba(0,0,0,.85); }
+.overlay-content { text-align: center; padding: 28px 44px; }
+.overlay-title { font-size: 38px; font-weight: 900; color: #fff; }
+.overlay-sub   { font-size: 20px; color: #aaa; margin-top: 8px; }
+.overlay-btn   { margin-top: 18px; padding: 11px 32px; background: #ff6600; border: none; color: #fff; font-size: 14px; font-weight: 700; border-radius: 6px; cursor: pointer; }
+
+/* Post match */
+.post-card { background: #111820; border: 1px solid #1e2535; border-radius: 12px; padding: 36px; text-align: center; max-width: 500px; }
+.post-badge { font-size: 12px; color: #ff6600; letter-spacing: 2px; margin-bottom: 8px; }
+.post-card h2 { color: #fff; font-size: 28px; margin-bottom: 20px; }
+.post-score { display: flex; align-items: center; gap: 20px; margin-bottom: 16px; color: #aaa; font-size: 13px; justify-content: center; }
+.score-big { font-size: 42px; font-weight: 900; color: #ff6600; }
+.story-result-text { font-size: 12px; color: #667; line-height: 1.6; margin-bottom: 20px; max-width: 380px; white-space: pre-wrap; }
+.post-actions { display: flex; gap: 10px; justify-content: center; }
+.btn { padding: 11px 26px; border-radius: 6px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
+.btn-primary   { background: #ff6600; color: #fff; }
+.btn-secondary { background: #1a2535; color: #aaa; border: 1px solid #2e4060; }
+.overlay-fade-enter-active, .overlay-fade-leave-active { transition: opacity .3s; }
+.overlay-fade-enter-from, .overlay-fade-leave-to { opacity: 0; }
 </style>
