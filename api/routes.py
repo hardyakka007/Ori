@@ -67,6 +67,10 @@ def _player_spotlight_dict(p: Player) -> dict:
         "stats": stats,
         "is_icon": p.is_icon,
         "face_url": f"/assets/faces/{p.id}.png",
+        "face_skin": p.face_skin,
+        "face_hair": p.face_hair,
+        "face_style": p.face_style,
+        "face_beard": p.face_beard,
     }
 
 
@@ -141,9 +145,12 @@ def clubs():
             "league": club.league,
             "country": club.country,
             "stadium": club.stadium,
+            "capacity": club.capacity,
             "prestige": club.prestige,
             "style": club.style.name,
             "style_desc": club.style.description,
+            "primary_color": club.primary_color,
+            "secondary_color": club.secondary_color,
         })
     return jsonify(result)
 
@@ -224,6 +231,8 @@ def team_data(club_name: str):
             "name": club.name,
             "style": club.style.name,
             "prestige": club.prestige,
+            "primary_color": club.primary_color,
+            "secondary_color": club.secondary_color,
         },
         "players": [p.to_dict() for p in squad],
     })

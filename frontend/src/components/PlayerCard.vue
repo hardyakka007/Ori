@@ -3,19 +3,24 @@
     <div class="card-ovr">{{ player.overall }}</div>
     <div class="card-pos">{{ player.position }}</div>
 
-    <!-- Face portrait -->
+    <!-- Face portrait — SVG illustrated face or image fallback -->
     <div class="face-circle">
       <img
-        v-if="imgOk"
+        v-if="imgOk && player.face_url"
         :src="player.face_url"
         :alt="player.name"
         class="face-img"
         @error="imgOk = false"
       />
-      <svg v-else class="face-svg" viewBox="0 0 80 80">
-        <circle cx="40" cy="28" r="18" fill="rgba(255,255,255,.55)"/>
-        <ellipse cx="40" cy="72" rx="26" ry="20" fill="rgba(255,255,255,.55)"/>
-      </svg>
+      <PlayerFace
+        v-else
+        :face-skin="player.face_skin ?? 2"
+        :face-hair="player.face_hair ?? 'brown'"
+        :face-style="player.face_style ?? 'short'"
+        :beard="player.face_beard ?? 'clean'"
+        :tier="player.tier"
+        :size="78"
+      />
     </div>
 
     <div class="card-name">{{ player.name }}</div>
@@ -34,8 +39,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import PlayerFace from './PlayerFace.vue'
 defineProps({ player: { type: Object, required: true } })
-const imgOk = ref(true)
+const imgOk = ref(false)   // default to SVG face; set true if real image loads
 </script>
 
 <style scoped>
