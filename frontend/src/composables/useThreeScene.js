@@ -20,12 +20,16 @@ export function useThreeScene() {
   const playerMeshes = { home: [], away: [] }
 
   // ── Public: initialise scene on a canvas element ─────────────────────────
+  let _resizeHandler = null
+
   function init(canvas) {
+    const w = canvas.clientWidth  || canvas.parentElement?.clientWidth  || 800
+    const h = canvas.clientHeight || canvas.parentElement?.clientHeight || 500
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight)
+    renderer.setSize(w, h)
 
     scene = new THREE.Scene()
     scene.background = new THREE.Color(0x0a0a1a)
@@ -37,7 +41,8 @@ export function useThreeScene() {
     _buildStadium()
     _buildBall()
 
-    window.addEventListener('resize', () => _onResize(canvas))
+    _resizeHandler = () => _onResize(canvas)
+    window.addEventListener('resize', _resizeHandler)
   }
 
   // ── Public: update 3D world from game state each frame ───────────────────
@@ -55,14 +60,15 @@ export function useThreeScene() {
   // ── Public: dispose resources ─────────────────────────────────────────────
   function dispose() {
     cancelAnimationFrame(animId)
-    window.removeEventListener('resize', _onResize)
+    if (_resizeHandler) window.removeEventListener('resize', _resizeHandler)
     renderer?.dispose()
   }
 
   // ── Camera ────────────────────────────────────────────────────────────────
   function _buildCamera(canvas) {
-    const aspect = canvas.clientWidth / canvas.clientHeight
-    camera = new THREE.PerspectiveCamera(55, aspect, 0.1, 400)
+    const w = canvas.clientWidth  || canvas.parentElement?.clientWidth  || 800
+    const h = canvas.clientHeight || canvas.parentElement?.clientHeight || 500
+    camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 400)
     // Classic FIFA-style: elevated angle slightly behind centre
     camera.position.set(0, 42, 52)
     camera.lookAt(0, 0, 0)

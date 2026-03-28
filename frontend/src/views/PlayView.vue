@@ -337,7 +337,7 @@ async function loadTeams() {
 .sb-score  { font-size: 1.8rem; font-weight: 900; letter-spacing: 4px; }
 .sb-time   { font-size: 0.75rem; color: #888; }
 
-.canvas-wrap { flex: 1; position: relative; overflow: hidden; }
+.canvas-wrap { flex: 1; min-height: 0; position: relative; overflow: hidden; }
 
 .overlay {
   position: absolute; inset: 0;

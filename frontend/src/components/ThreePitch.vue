@@ -3,11 +3,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useThreeScene } from '../composables/useThreeScene.js'
 
 const props = defineProps({
-  gameState:    { type: Object, default: null },  // { homePlayers, awayPlayers, ball }
+  gameState:    { type: Object, default: null },
   homeColor:    { type: String, default: '#e74c3c' },
   awayColor:    { type: String, default: '#3498db' },
   active:       { type: Boolean, default: false },
@@ -17,9 +17,15 @@ const canvasRef = ref(null)
 const { init, updateState, render, dispose } = useThreeScene()
 let rafId = null
 
-onMounted(() => {
-  if (!canvasRef.value) return
-  init(canvasRef.value)
+onMounted(async () => {
+  // Wait for layout so canvas.clientWidth/Height are correct
+  await nextTick()
+  const canvas = canvasRef.value
+  if (!canvas) return
+
+  // If still 0 (flex container not measured yet), wait one rAF
+  await new Promise(resolve => requestAnimationFrame(resolve))
+  init(canvas)
 
   const loop = () => {
     rafId = requestAnimationFrame(loop)
