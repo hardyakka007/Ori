@@ -68,6 +68,7 @@
 
       <nav class="menu-buttons">
         <button class="btn btn-primary" @click="goPlay">▶ &nbsp;Play the Game</button>
+        <button class="btn btn-3d" @click="goGame">🎮 &nbsp;3D Match — New!</button>
         <button class="btn btn-secondary" @click="goWatch">◉ &nbsp;Watch the Play</button>
         <button class="btn btn-disabled" disabled>
           Career Mode
@@ -131,6 +132,7 @@ onMounted(() => {
 
 function goPlay()  { router.push('/play') }
 function goWatch() { router.push('/watch') }
+function goGame()  { router.push('/game') }
 </script>
 
 <style scoped>
@@ -302,6 +304,12 @@ function goWatch() { router.push('/watch') }
   box-shadow: 0 4px 20px rgba(41,128,185,.3);
 }
 .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(41,128,185,.45); }
+.btn-3d {
+  background: linear-gradient(135deg, #8e44ad, #5b1a8a);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(142,68,173,.4);
+}
+.btn-3d:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(142,68,173,.6); }
 .btn-disabled {
   background: #1a1a1a;
   color: #444;
