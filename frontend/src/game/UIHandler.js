@@ -100,6 +100,7 @@ export class UIHandler {
         <span>Space Kick</span>
         <span>Z Tackle</span>
         <span>Tab Sprint</span>
+        <span>Q Switch Player</span>
         <span>C Camera</span>
         <span>Esc Pause</span>
       </div>

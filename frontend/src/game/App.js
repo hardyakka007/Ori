@@ -88,13 +88,24 @@ export class SoccerGame {
     // Human controls the first home player
     this.controlledPlayer = this.homePlayers[9]; // striker by default (index 9 = ST in 4-3-3)
 
-    // AI
+    // Away AI
     this.ai = new AIController({
       aiPlayers:    this.awayPlayers,
       humanPlayers: this.homePlayers,
       ballBody:     this.ballBody,
       difficulty:   this.difficulty,
       attackDir:    -1,
+      formation:    FORMATION_433,
+    });
+
+    // Home AI — runs the same logic for teammates not controlled by the human.
+    // GK (index 0) is always AI-run and never handed to the human.
+    this.homeAi = new AIController({
+      aiPlayers:    this._nonControlledHomePlayers(),
+      humanPlayers: this.awayPlayers,
+      ballBody:     this.ballBody,
+      difficulty:   this.difficulty,
+      attackDir:    +1,
       formation:    FORMATION_433,
     });
 
@@ -217,6 +228,7 @@ export class SoccerGame {
 
       if (e.code === 'Escape') this._togglePause();
       if (e.code === 'KeyC')   this._cycleCamera();
+      if (e.code === 'KeyQ')   this._manualSwitchPlayer();
     };
     this._keyup = e => { this._keys[e.code] = false; };
     window.addEventListener('keydown', this._keydown);
@@ -242,6 +254,20 @@ export class SoccerGame {
 
   _getTackleInput() {
     return this._keys['KeyZ'];
+  }
+
+  // ─── Player switching ──────────────────────────────────────────────────────
+  /** Returns home players that should be AI-controlled (non-GK, non-human). */
+  _nonControlledHomePlayers() {
+    return this.homePlayers.filter((p, i) => i !== 0 && p !== this.controlledPlayer);
+  }
+
+  /** Q — cycle through eligible outfield home players in squad order. */
+  _manualSwitchPlayer() {
+    const eligible = this.homePlayers.filter((_, i) => i !== 0); // exclude GK
+    const cur  = eligible.indexOf(this.controlledPlayer);
+    this.controlledPlayer = eligible[(cur + 1) % eligible.length];
+    this.homeAi.setPlayers(this._nonControlledHomePlayers());
   }
 
   // ─── Camera ────────────────────────────────────────────────────────────────
@@ -332,11 +358,15 @@ export class SoccerGame {
       }
     }
 
-    // 5. AI update (non-human players on home team: just update positions)
-    this.homePlayers.forEach((p, i) => {
-      if (i !== 9) p.update(dt, null, null); // non-controlled home players idle
-    });
+    // 5. AI updates
+    // Away team AI
     this.ai.update(dt);
+    // Home team AI — keeps non-controlled outfield players active with same logic
+    this.homeAi.setPlayers(this._nonControlledHomePlayers());
+    this.homeAi.update(dt);
+    // GK always AI-driven (idle/positional — handled by homeAi since index 0 is excluded
+    // from _nonControlledHomePlayers, so run it manually as a stationary keeper)
+    this.homePlayers[0].update(dt, null, null);
 
     // 6. Match engine
     this.match.update(dt);
@@ -363,16 +393,21 @@ export class SoccerGame {
   }
 
   _autoSwitchPlayer() {
-    // Switch control to nearest home player to ball (excluding GK index 0)
-    const ballPos = this.ballBody.position;
+    // Auto-switch only when a teammate is significantly closer to the ball
+    // than the currently controlled player (avoids yanking control mid-dribble).
+    const ballPos    = this.ballBody.position;
+    const curDist    = this.controlledPlayer?.body.position.distanceTo(ballPos) ?? Infinity;
     let nearest = null, nearDist = Infinity;
     this.homePlayers.forEach((p, i) => {
-      if (i === 0) return; // keep GK AI-controlled
+      if (i === 0) return;                      // GK stays AI
+      if (p === this.controlledPlayer) return;
       const d = p.body.position.distanceTo(ballPos);
       if (d < nearDist) { nearDist = d; nearest = p; }
     });
-    if (nearest && nearest !== this.controlledPlayer) {
+    // Switch only if another player is at least 4m closer to the ball
+    if (nearest && nearDist < curDist - 4) {
       this.controlledPlayer = nearest;
+      this.homeAi.setPlayers(this._nonControlledHomePlayers());
     }
   }
 
