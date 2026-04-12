@@ -70,10 +70,7 @@
         <button class="btn btn-primary" @click="goPlay">▶ &nbsp;Play the Game</button>
         <button class="btn btn-3d" @click="goGame">🎮 &nbsp;3D Match — New!</button>
         <button class="btn btn-secondary" @click="goWatch">◉ &nbsp;Watch the Play</button>
-        <button class="btn btn-disabled" disabled>
-          Career Mode
-          <span class="badge">Coming Soon</span>
-        </button>
+        <button class="btn btn-career" @click="goCareer">🏆 &nbsp;Career Mode</button>
         <button class="btn btn-disabled" disabled>
           The Journey
           <span class="badge">Coming Soon</span>
@@ -130,9 +127,10 @@ onMounted(() => {
   buildCrowd()
 })
 
-function goPlay()  { router.push('/play') }
-function goWatch() { router.push('/watch') }
-function goGame()  { router.push('/game') }
+function goPlay()   { router.push('/play') }
+function goWatch()  { router.push('/watch') }
+function goGame()   { router.push('/game') }
+function goCareer() { router.push('/career') }
 </script>
 
 <style scoped>
@@ -310,6 +308,12 @@ function goGame()  { router.push('/game') }
   box-shadow: 0 4px 20px rgba(142,68,173,.4);
 }
 .btn-3d:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(142,68,173,.6); }
+.btn-career {
+  background: linear-gradient(135deg, #d4a017, #a07010);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(212,160,23,.35);
+}
+.btn-career:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(212,160,23,.55); }
 .btn-disabled {
   background: #1a1a1a;
   color: #444;

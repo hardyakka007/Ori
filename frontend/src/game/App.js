@@ -26,6 +26,7 @@ import { AIController }      from './AIController.js';
 import { MatchEngine, PHASE } from './MatchEngine.js';
 import { UIHandler }          from './UIHandler.js';
 import { DifficultyManager }  from './DifficultyManager.js';
+import { SoundManager }       from './SoundManager.js';
 
 // ── Formation templates [x offset from centre, z offset] ─────────────────────
 //    x is relative to attack direction (+ve = forward)
@@ -122,6 +123,19 @@ export class SoccerGame {
     this.ui = new UIHandler(uiContainer, this.match);
     this.ui.setTeamNames(homeTeam.name, awayTeam.name);
     this.ui.setDifficulty(this.difficulty.config.label);
+
+    // Sound
+    this.sound = new SoundManager();
+    this.match.on('goal',      () => { this.sound.playGoal(); });
+    this.match.on('half_time', () => { this.sound.playWhistle(3); this.sound.stopCrowd(); });
+    this.match.on('full_time', () => { this.sound.playWhistle(3); this.sound.stopCrowd(); });
+    this.match.on('corner',    () => this.sound.playWhistle(1));
+    this.match.on('throw_in',  () => this.sound.playWhistle(1));
+    this.match.on('goal_kick', () => this.sound.playWhistle(1));
+    this.match.on('free_kick', () => this.sound.playWhistle(1));
+    this.match.on('phase_change', ({ phase }) => {
+      if (phase === 'in_play') this.sound.startCrowd();
+    });
 
     // Input
     this._bindInput();
@@ -305,6 +319,8 @@ export class SoccerGame {
   // ─── Main loop ─────────────────────────────────────────────────────────────
   start() {
     this.match.kickoff();
+    this.sound.startCrowd();
+    this.sound.playWhistle(1);
     this._lastTime = performance.now();
     this._tick();
   }
@@ -342,10 +358,11 @@ export class SoccerGame {
 
       // Kick
       if (this._getKickInput()) {
-        const ballPos3 = new THREE.Vector3(ballP.x, ballP.y, ballP.z);
+        const ballPos3  = new THREE.Vector3(ballP.x, ballP.y, ballP.z);
         const playerPos = this.controlledPlayer?.meshGroup.position ?? new THREE.Vector3();
-        const toGoal   = new THREE.Vector3(PITCH_W / 2, 0, 0).sub(playerPos).normalize();
-        this.controlledPlayer?.kick(this.ballBody, toGoal, 0.85);
+        const toGoal    = new THREE.Vector3(PITCH_W / 2, 0, 0).sub(playerPos).normalize();
+        const kicked    = this.controlledPlayer?.kick(this.ballBody, toGoal, 0.85);
+        if (kicked) this.sound.playKick();
       }
 
       // Tackle
@@ -417,6 +434,7 @@ export class SoccerGame {
     window.removeEventListener('keydown', this._keydown);
     window.removeEventListener('keyup',   this._keyup);
     window.removeEventListener('resize',  this._onResize);
+    this.sound.dispose();
     this.ui.dispose();
     this.scene.dispose();
     [...this.homePlayers, ...this.awayPlayers].forEach(p => p.dispose());

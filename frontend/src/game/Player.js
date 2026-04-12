@@ -2,14 +2,25 @@
  * Player.js
  * Creates and manages a single player's 3D mesh, physics body, and state machine.
  *
- * "Real Face" integration points are marked with  // [REAL-FACE]  comments.
- * To upgrade: load a .glb model with GLTFLoader, replace the capsule mesh,
- * and apply the face texture to the head mesh material.
+ * [REAL-FACE] model loading is live: drop a .glb file at
+ *   /assets/players/<player-id>.glb
+ * and it will be loaded automatically. The capsule mesh is kept as fallback.
+ *
+ * Face textures (head UV map):
+ *   /assets/faces/<player-id>.webp
  */
 
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { PITCH_W, PITCH_D } from './SceneManager.js';
+
+// ── GLTFLoader (dynamic import so it doesn't bloat the initial bundle) ─────────
+async function loadGLTF(url) {
+  const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+  return new Promise((resolve, reject) => {
+    new GLTFLoader().load(url, resolve, undefined, reject);
+  });
+}
 
 // ── Animation states ──────────────────────────────────────────────────────────
 export const ANIM = {
@@ -77,12 +88,8 @@ export class Player {
     this.headMesh = new THREE.Mesh(_headGeo, matSkin);
     this.headMesh.position.y = 0.9;
 
-    // [REAL-FACE] ─────────────────────────────────────────────────────────────
-    // When a real-face texture URL is available for this.data.id, do:
-    //   const loader  = new THREE.TextureLoader();
-    //   const faceTex = await loader.loadAsync(`/assets/faces/${this.data.id}.webp`);
-    //   this.headMesh.material = new THREE.MeshToonMaterial({ map: faceTex });
-    // ─────────────────────────────────────────────────────────────────────────
+    // [REAL-FACE] — async model + face texture swap ───────────────────────────
+    this._tryLoadModel(data.id);
 
     // Number label (canvas texture)
     const labelTex = this._makeNumberTexture(this.data.rating ?? '?');
@@ -121,6 +128,54 @@ export class Player {
     this.shadowMesh.rotation.x = -Math.PI / 2;
     this.shadowMesh.position.y = 0.01;
     this.scene.add(this.shadowMesh);
+  }
+
+  // ─── [REAL-FACE] async model loader ────────────────────────────────────────
+  async _tryLoadModel(id) {
+    // 1. Try to load a full body .glb model
+    try {
+      const gltf  = await loadGLTF(`/assets/players/${id}.glb`);
+      const model = gltf.scene;
+
+      // Scale to match capsule height (~1.8m)
+      const box = new THREE.Box3().setFromObject(model);
+      const h   = box.max.y - box.min.y;
+      const s   = 1.8 / (h || 1);
+      model.scale.setScalar(s);
+      model.position.y = -box.min.y * s;
+
+      model.traverse(c => { if (c.isMesh) c.castShadow = true; });
+
+      // Swap out procedural meshes
+      this.meshGroup.remove(this.bodyMesh, this.headMesh);
+      this.meshGroup.add(model);
+      this._gltfModel = model;
+    } catch {
+      // No model found — capsule mesh stays, try face texture only
+    }
+
+    // 2. Try to apply real-face texture to head mesh (or GLTF head node)
+    try {
+      const tex = await new THREE.TextureLoader().loadAsync(
+        `/assets/faces/${id}.webp`
+      );
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const faceMat  = new THREE.MeshToonMaterial({ map: tex });
+
+      if (this._gltfModel) {
+        // Apply to any mesh named 'Head' or 'Face' inside the GLTF
+        this._gltfModel.traverse(c => {
+          if (c.isMesh && /head|face/i.test(c.name)) {
+            c.material = faceMat;
+          }
+        });
+      } else {
+        // Fallback: apply to the procedural head sphere
+        this.headMesh.material = faceMat;
+      }
+    } catch {
+      // No face texture — default skin colour stays
+    }
   }
 
   // ─── Physics body ──────────────────────────────────────────────────────────
