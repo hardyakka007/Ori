@@ -118,16 +118,35 @@ async function startGame() {
 
   phase.value = 'game'
   await nextTick()
+  // Extra frame so the browser paints the canvas element before we read its size
+  await new Promise(r => requestAnimationFrame(r))
 
-  const canvas     = canvasEl.value
+  const canvas      = canvasEl.value
   const uiContainer = uiEl.value
 
-  // Size the canvas to fill the viewport
-  canvas.width  = gameWrap.value.clientWidth
-  canvas.height = gameWrap.value.clientHeight
+  if (!canvas || !uiContainer) {
+    console.error('Canvas or UI container not found after mount')
+    phase.value = 'select'
+    return
+  }
 
-  const homeTeam = { id: homeId.value, ...teams.value[homeId.value] }
-  const awayTeam = { id: awayId.value, ...teams.value[awayId.value] }
+  // Size canvas buffer to match CSS layout size
+  const w = gameWrap.value.clientWidth  || window.innerWidth
+  const h = gameWrap.value.clientHeight || window.innerHeight
+  canvas.width  = w
+  canvas.height = h
+
+  const homeTeamData = teams.value[homeId.value]
+  const awayTeamData = teams.value[awayId.value]
+
+  if (!homeTeamData?.players?.length || !awayTeamData?.players?.length) {
+    console.error('Team data missing players', { homeTeamData, awayTeamData })
+    phase.value = 'select'
+    return
+  }
+
+  const homeTeam = { id: homeId.value, ...homeTeamData }
+  const awayTeam = { id: awayId.value, ...awayTeamData }
 
   game = new SoccerGame(canvas, uiContainer, {
     homeTeam,

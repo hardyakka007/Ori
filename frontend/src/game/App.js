@@ -68,6 +68,7 @@ export class SoccerGame {
     this._keys       = {};
     this._camMode    = CAM_MODES.TV;
     this._camCooldown = 0;
+    this._prevControlled = null; // tracks when controlled player changes
 
     // Managers
     this.difficulty = new DifficultyManager(difficulty);
@@ -378,11 +379,13 @@ export class SoccerGame {
     // 5. AI updates
     // Away team AI
     this.ai.update(dt);
-    // Home team AI — keeps non-controlled outfield players active with same logic
-    this.homeAi.setPlayers(this._nonControlledHomePlayers());
+    // Home team AI — only refresh player list when controlled player changes
+    if (this._prevControlled !== this.controlledPlayer) {
+      this.homeAi.setPlayers(this._nonControlledHomePlayers());
+      this._prevControlled = this.controlledPlayer;
+    }
     this.homeAi.update(dt);
-    // GK always AI-driven (idle/positional — handled by homeAi since index 0 is excluded
-    // from _nonControlledHomePlayers, so run it manually as a stationary keeper)
+    // GK always AI-driven (stationary keeper)
     this.homePlayers[0].update(dt, null, null);
 
     // 6. Match engine
@@ -424,7 +427,7 @@ export class SoccerGame {
     // Switch only if another player is at least 4m closer to the ball
     if (nearest && nearDist < curDist - 4) {
       this.controlledPlayer = nearest;
-      this.homeAi.setPlayers(this._nonControlledHomePlayers());
+      // homeAi player list refreshed next frame via _prevControlled check
     }
   }
 

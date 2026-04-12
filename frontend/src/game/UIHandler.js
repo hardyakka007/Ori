@@ -124,7 +124,7 @@ export class UIHandler {
       <div id="ui-pause" style="
         display:none; position:absolute; inset:0;
         background:rgba(0,0,0,.75); pointer-events:all;
-        display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+        flex-direction:column; align-items:center; justify-content:center; gap:16px;
       ">
         <div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:4px;margin-bottom:8px;">PAUSED</div>
         <button id="ui-resume" style="${btnStyle('#27ae60')}">Resume</button>
