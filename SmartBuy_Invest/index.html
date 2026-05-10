@@ -5,52 +5,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SmartBuy - AI Real Estate Platform</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: { extend: { colors: { brand: '#2563eb' } } }
-}
-</script>
 <style>
   body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; }
   .card { background: white; border-radius: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  .badge-hot { background:#fef2f2; color:#dc2626; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:700; }
-  .badge-good { background:#fefce8; color:#ca8a04; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:700; }
-  .badge-fair { background:#f0fdf4; color:#16a34a; border-radius:999px; padding:2px 10px; font-size:12px; font-weight:700; }
   .nav-link { cursor:pointer; padding:8px 14px; border-radius:10px; font-weight:600; font-size:14px; transition:background 0.15s; }
   .nav-link:hover { background:#eff6ff; color:#2563eb; }
   .nav-link.active { background:#dbeafe; color:#2563eb; }
   .page { display:none; }
   .page.active { display:block; }
   .btn { cursor:pointer; padding:10px 22px; border-radius:12px; font-weight:600; font-size:14px; border:none; transition:opacity 0.15s; }
-  .btn:hover { opacity:0.88; }
+  .btn:hover { opacity:0.85; }
   .btn-primary { background:#2563eb; color:white; }
   .btn-secondary { background:#e2e8f0; color:#334155; }
-  .btn-red { background:#dc2626; color:white; }
-  .listing-img { width:100%; height:180px; object-fit:cover; border-radius:12px 12px 0 0; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-size:48px; }
-  input, select, textarea { border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px; width:100%; font-size:14px; outline:none; transition:border 0.15s; background:white; }
+  input, select { border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px; width:100%; font-size:14px; outline:none; transition:border 0.15s; background:white; }
   input:focus, select:focus { border-color:#2563eb; }
-  .heart { cursor:pointer; font-size:20px; transition:transform 0.15s; }
+  .heart { cursor:pointer; transition:transform 0.15s; }
   .heart:hover { transform:scale(1.3); }
-  .score-ring { display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:50%; font-weight:800; font-size:15px; }
-  .tab { cursor:pointer; padding:8px 18px; border-radius:10px; font-weight:600; font-size:14px; transition:background 0.15s; }
-  .tab.active { background:#2563eb; color:white; }
-  .tab:not(.active) { background:#e2e8f0; color:#475569; }
-  .tab:not(.active):hover { background:#cbd5e1; }
-  .notif-dot { width:10px; height:10px; background:#ef4444; border-radius:50%; display:inline-block; margin-left:4px; }
-  .bar { border-radius:6px 6px 0 0; transition:height 0.6s; }
+  .stab { cursor:pointer; padding:8px 18px; border-radius:10px; font-weight:600; font-size:14px; transition:background 0.15s; }
+  .stab.active { background:#2563eb; color:white; }
+  .stab:not(.active) { background:#e2e8f0; color:#475569; }
+  .stab:not(.active):hover { background:#cbd5e1; }
+  .bar { border-radius:6px 6px 0 0; transition:height 0.8s; }
   @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
   .fade-in { animation: fadeIn 0.3s ease; }
   .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#1e293b; color:white; padding:12px 24px; border-radius:12px; font-weight:600; z-index:9999; animation:fadeIn 0.3s ease; }
-  .saved { color:#ef4444; }
+
+  /* MODE SWITCHER */
+  .mode-bar { position:fixed; top:60px; left:0; right:0; z-index:99; display:flex; border-bottom:2px solid #e2e8f0; }
+  .mode-btn { flex:1; padding:12px; font-size:15px; font-weight:700; border:none; cursor:pointer; transition:all 0.2s; }
+  .mode-btn.couple { background:#fdf2f8; color:#9d174d; }
+  .mode-btn.couple.active { background:#ec4899; color:white; }
+  .mode-btn.investor { background:#eff6ff; color:#1e40af; }
+  .mode-btn.investor.active { background:#2563eb; color:white; }
 </style>
 </head>
 <body>
 
 <!-- NAVBAR -->
 <nav style="background:white;border-bottom:1px solid #e2e8f0;position:fixed;top:0;left:0;right:0;z-index:100;height:60px;">
-  <div style="max-width:1200px;margin:0 auto;padding:0 20px;height:100%;display:flex;align-items:center;gap:8px;">
+  <div style="max-width:1200px;margin:0 auto;padding:0 20px;height:100%;display:flex;align-items:center;gap:6px;">
     <span style="font-size:26px;">🏠</span>
-    <span style="font-size:20px;font-weight:800;color:#2563eb;margin-right:20px;">SmartBuy</span>
+    <span style="font-size:20px;font-weight:800;color:#2563eb;margin-right:16px;">SmartBuy</span>
     <span class="nav-link active" onclick="showPage('home',this)">🏠 Home</span>
     <span class="nav-link" onclick="showPage('search',this)">🔍 Search</span>
     <span class="nav-link" onclick="showPage('hotdeals',this)">🔥 Hot Deals</span>
@@ -58,576 +53,669 @@ tailwind.config = {
     <span class="nav-link" onclick="showPage('favorites',this)">❤️ Saved</span>
     <span class="nav-link" onclick="showPage('agents',this)">🤖 Agents</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
-      <span style="font-size:22px;cursor:pointer;position:relative;" onclick="showPage('notifications',document.querySelector('.nav-link.active'))">
-        🔔<span class="notif-dot" id="notif-dot" style="position:absolute;top:0;right:0;"></span>
+      <span style="font-size:22px;cursor:pointer;position:relative;" onclick="showPage('notifications',null)">
+        🔔<span id="notif-dot" style="position:absolute;top:0;right:0;width:9px;height:9px;background:#ef4444;border-radius:50%;"></span>
       </span>
-      <span style="font-size:22px;cursor:pointer;" onclick="showPage('profile',document.querySelector('.nav-link.active'))">👤</span>
+      <span style="font-size:22px;cursor:pointer;" onclick="showPage('profile',null)">👤</span>
     </div>
   </div>
 </nav>
 
-<div style="padding-top:70px;max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px;">
+<!-- MODE SWITCHER BAR -->
+<div class="mode-bar">
+  <button class="mode-btn couple active" id="btn-couple" onclick="setMode('couple')">
+    💑 Young Couples — Affordable Homes
+  </button>
+  <button class="mode-btn investor" id="btn-investor" onclick="setMode('investor')">
+    📈 Investors — Best ROI Deals
+  </button>
+</div>
 
-<!-- ========== HOME PAGE ========== -->
+<div style="padding-top:112px;max-width:1200px;margin:0 auto;padding-left:20px;padding-right:20px;">
+
+<!-- ====== HOME ====== -->
 <div id="page-home" class="page active fade-in" style="padding-top:20px;">
-  <div style="background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:24px;padding:36px;color:white;margin-bottom:28px;">
-    <h1 style="font-size:28px;font-weight:800;margin-bottom:8px;">שלום Investor! 👋</h1>
-    <p style="opacity:0.9;font-size:15px;">AI agents are hunting the best deals for you 24/7</p>
-    <div style="background:rgba(255,255,255,0.15);border-radius:14px;padding:16px;margin-top:18px;display:flex;align-items:center;gap:14px;">
-      <span style="font-size:32px;">🔥</span>
+
+  <!-- COUPLE HERO -->
+  <div id="hero-couple" style="background:linear-gradient(135deg,#be185d,#ec4899);border-radius:24px;padding:36px;color:white;margin-bottom:24px;">
+    <p style="font-size:13px;font-weight:700;opacity:0.85;margin-bottom:6px;">💑 YOUNG COUPLES MODE</p>
+    <h1 style="font-size:26px;font-weight:800;margin-bottom:8px;">Find Your First Home Together 🏡</h1>
+    <p style="opacity:0.9;font-size:14px;">We filtered out the expensive stuff. Showing only affordable homes under ₪1.5M — perfect for first-time buyers.</p>
+    <div style="background:rgba(255,255,255,0.18);border-radius:14px;padding:16px;margin-top:18px;display:flex;align-items:center;gap:14px;">
+      <span style="font-size:28px;">💰</span>
       <div style="flex:1;">
-        <p style="font-weight:700;font-size:16px;">5 Hot Deals Found Today!</p>
-        <p style="opacity:0.8;font-size:13px;">Matching your preferences in Tel Aviv & Ramat Gan</p>
+        <p style="font-weight:700;font-size:15px;">3 Affordable Deals Found Today!</p>
+        <p style="opacity:0.8;font-size:13px;">Under ₪1.5M · Tel Aviv & Ramat Gan</p>
       </div>
-      <button class="btn" style="background:white;color:#1d4ed8;font-weight:700;" onclick="showPage('hotdeals',document.querySelectorAll('.nav-link')[2])">View →</button>
+      <button class="btn" style="background:white;color:#be185d;font-weight:700;" onclick="showPage('hotdeals',document.querySelectorAll('.nav-link')[2])">View →</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;text-align:center;">
+      <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:14px;">
+        <p style="font-size:22px;font-weight:800;">₪680K</p>
+        <p style="font-size:12px;opacity:0.85;">Lowest deal today</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:14px;">
+        <p style="font-size:22px;font-weight:800;">₪1.1M</p>
+        <p style="font-size:12px;opacity:0.85;">Average first-home price</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:14px;">
+        <p style="font-size:22px;font-weight:800;">30%</p>
+        <p style="font-size:12px;opacity:0.85;">Avg mortgage assistance</p>
+      </div>
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
-    <div class="card" style="padding:20px;text-align:center;cursor:pointer;background:#eff6ff;" onclick="showPage('search',document.querySelectorAll('.nav-link')[1])">
-      <div style="font-size:32px;">🔍</div>
-      <p style="font-weight:700;font-size:13px;color:#1d4ed8;margin-top:6px;">Search Listings</p>
+  <!-- INVESTOR HERO -->
+  <div id="hero-investor" style="display:none;background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:24px;padding:36px;color:white;margin-bottom:24px;">
+    <p style="font-size:13px;font-weight:700;opacity:0.85;margin-bottom:6px;">📈 INVESTOR MODE</p>
+    <h1 style="font-size:26px;font-weight:800;margin-bottom:8px;">Maximum ROI. Minimum Effort. 💼</h1>
+    <p style="opacity:0.9;font-size:14px;">Agents scan Yad2 & Madlan 24/7 for properties priced well below market — so you can buy low and rent or flip high.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px;text-align:center;">
+      <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:14px;">
+        <p style="font-size:22px;font-weight:800;">5</p>
+        <p style="font-size:12px;opacity:0.85;">Hot deals today</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:14px;">
+        <p style="font-size:22px;font-weight:800;">8.2%</p>
+        <p style="font-size:12px;opacity:0.85;">Best rental yield</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:14px;">
+        <p style="font-size:22px;font-weight:800;">89</p>
+        <p style="font-size:12px;opacity:0.85;">Top deal score today</p>
+      </div>
     </div>
-    <div class="card" style="padding:20px;text-align:center;cursor:pointer;background:#fef2f2;" onclick="showPage('hotdeals',document.querySelectorAll('.nav-link')[2])">
-      <div style="font-size:32px;">🔥</div>
-      <p style="font-weight:700;font-size:13px;color:#dc2626;margin-top:6px;">Hot Deals</p>
-    </div>
-    <div class="card" style="padding:20px;text-align:center;cursor:pointer;background:#f0fdf4;" onclick="showPage('compare',document.querySelectorAll('.nav-link')[3])">
-      <div style="font-size:32px;">⚖️</div>
-      <p style="font-weight:700;font-size:13px;color:#16a34a;margin-top:6px;">Compare Areas</p>
-    </div>
-    <div class="card" style="padding:20px;text-align:center;cursor:pointer;background:#faf5ff;" onclick="showPage('agents',document.querySelectorAll('.nav-link')[5])">
-      <div style="font-size:32px;">🤖</div>
-      <p style="font-weight:700;font-size:13px;color:#7c3aed;margin-top:6px;">Agent Settings</p>
+    <div style="background:rgba(255,255,255,0.18);border-radius:14px;padding:16px;margin-top:16px;display:flex;align-items:center;gap:14px;">
+      <span style="font-size:28px;">🔥</span>
+      <div style="flex:1;">
+        <p style="font-weight:700;font-size:15px;">5 Hot Investment Deals Found!</p>
+        <p style="opacity:0.8;font-size:13px;">25% below market · Score 75+</p>
+      </div>
+      <button class="btn" style="background:white;color:#1e3a8a;font-weight:700;" onclick="showPage('hotdeals',document.querySelectorAll('.nav-link')[2])">View →</button>
     </div>
   </div>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-    <h2 style="font-size:20px;font-weight:800;">🔥 Latest Hot Deals</h2>
+  <!-- Quick links -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+    <div class="card" style="padding:18px;text-align:center;cursor:pointer;" id="ql-search" onclick="showPage('search',document.querySelectorAll('.nav-link')[1])">
+      <div style="font-size:30px;">🔍</div>
+      <p style="font-weight:700;font-size:12px;margin-top:6px;" id="ql-search-label">Search Homes</p>
+    </div>
+    <div class="card" style="padding:18px;text-align:center;cursor:pointer;" onclick="showPage('hotdeals',document.querySelectorAll('.nav-link')[2])">
+      <div style="font-size:30px;" id="ql-deals-icon">💑</div>
+      <p style="font-weight:700;font-size:12px;margin-top:6px;" id="ql-deals-label">Affordable Deals</p>
+    </div>
+    <div class="card" style="padding:18px;text-align:center;cursor:pointer;" onclick="showPage('compare',document.querySelectorAll('.nav-link')[3])">
+      <div style="font-size:30px;">⚖️</div>
+      <p style="font-weight:700;font-size:12px;margin-top:6px;">Compare Areas</p>
+    </div>
+    <div class="card" style="padding:18px;text-align:center;cursor:pointer;" onclick="showPage('agents',document.querySelectorAll('.nav-link')[5])">
+      <div style="font-size:30px;">🤖</div>
+      <p style="font-weight:700;font-size:12px;margin-top:6px;">Agent Settings</p>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <h2 style="font-size:18px;font-weight:800;" id="home-section-title">💑 Best Deals for Couples</h2>
     <span style="color:#2563eb;font-weight:600;cursor:pointer;font-size:14px;" onclick="showPage('hotdeals',document.querySelectorAll('.nav-link')[2])">See all →</span>
   </div>
   <div id="home-listings" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:28px;"></div>
 
-  <div class="card" style="padding:24px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:white;">
-    <h3 style="font-size:17px;font-weight:700;">Upgrade to Premium 🚀</h3>
-    <p style="font-size:13px;opacity:0.9;margin-top:4px;">Get unlimited AI agent alerts, area comparisons and email digests for just $9.99/mo</p>
-    <button class="btn" style="background:white;color:#2563eb;font-weight:700;margin-top:14px;" onclick="showPage('profile',document.querySelector('.nav-link.active'))">View Plans</button>
-  </div>
+  <!-- CTA -->
+  <div id="home-cta" class="card" style="padding:24px;margin-bottom:20px;"></div>
 </div>
 
-<!-- ========== SEARCH PAGE ========== -->
+<!-- ====== SEARCH ====== -->
 <div id="page-search" class="page fade-in" style="padding-top:20px;">
-  <h1 style="font-size:22px;font-weight:800;margin-bottom:16px;">🔍 Search Listings</h1>
-  <div style="display:flex;gap:12px;margin-bottom:20px;">
-    <input id="search-input" type="text" placeholder="Search by city, area or neighborhood..." style="flex:1;" oninput="filterListings()" />
-    <select id="filter-type" onchange="filterListings()" style="width:160px;">
-      <option value="">All Types</option>
-      <option>Apartment</option>
-      <option>House</option>
-      <option>Studio</option>
-      <option>Penthouse</option>
-    </select>
-    <select id="filter-sort" onchange="filterListings()" style="width:160px;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <h1 style="font-size:22px;font-weight:800;" id="search-title">🔍 Search Affordable Homes</h1>
+    <span id="search-mode-tag" style="padding:4px 14px;border-radius:999px;font-size:12px;font-weight:700;background:#fce7f3;color:#be185d;">💑 Couples Mode</span>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+    <input id="search-input" type="text" placeholder="Search by city or neighborhood..." style="flex:1;min-width:200px;" oninput="filterListings()" />
+    <select id="filter-sort" onchange="filterListings()" style="width:180px;">
+      <option value="price-asc">Price: Low → High</option>
+      <option value="price-desc">Price: High → Low</option>
       <option value="newest">Newest</option>
-      <option value="price-asc">Price: Low→High</option>
-      <option value="price-desc">Price: High→Low</option>
       <option value="score">Best Deal Score</option>
     </select>
   </div>
-  <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
-    <input id="filter-min" type="number" placeholder="Min price ₪" style="width:150px;" oninput="filterListings()" />
-    <input id="filter-max" type="number" placeholder="Max price ₪" style="width:150px;" oninput="filterListings()" />
-    <select id="filter-area" onchange="filterListings()" style="width:180px;">
+  <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+    <input id="filter-min" type="number" placeholder="Min ₪" style="width:130px;" oninput="filterListings()" />
+    <input id="filter-max" type="number" placeholder="Max ₪" style="width:130px;" oninput="filterListings()" />
+    <select id="filter-area" onchange="filterListings()" style="width:170px;">
       <option value="">All Areas</option>
       <option>Tel Aviv</option><option>Ramat Gan</option><option>Herzeliya</option>
-      <option>Jerusalem</option><option>Haifa</option><option>Netanya</option><option>Beer Sheva</option>
+      <option>Jerusalem</option><option>Haifa</option><option>Netanya</option>
+      <option>Beer Sheva</option><option>Rishon LeZion</option>
     </select>
-    <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+    <select id="filter-type" onchange="filterListings()" style="width:150px;">
+      <option value="">All Types</option>
+      <option>Apartment</option><option>House</option><option>Studio</option><option>Penthouse</option>
+    </select>
+    <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
   </div>
   <p id="search-count" style="font-size:13px;color:#64748b;margin-bottom:14px;"></p>
   <div id="search-results" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;"></div>
 </div>
 
-<!-- ========== HOT DEALS PAGE ========== -->
+<!-- ====== HOT DEALS ====== -->
 <div id="page-hotdeals" class="page fade-in" style="padding-top:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-    <h1 style="font-size:22px;font-weight:800;">🔥 Hot Deals</h1>
-    <div id="agent-status" style="background:#dcfce7;color:#16a34a;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;">🤖 Agents Running</div>
-  </div>
-  <p style="color:#64748b;font-size:13px;margin-bottom:18px;">Properties with Deal Score 75+ — discovered by AI agents across Yad2 & Madlan</p>
-  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-    <button class="tab active" id="tab-all" onclick="filterHotDeals('all',this)">All Sources</button>
-    <button class="tab" onclick="filterHotDeals('yad2',this)">🏠 Yad2</button>
-    <button class="tab" onclick="filterHotDeals('madlan',this)">🏢 Madlan</button>
-  </div>
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
-    <span style="font-size:13px;font-weight:600;">Min Score:</span>
-    <button class="tab active" id="score-75" onclick="setMinScore(75,this)">75+</button>
-    <button class="tab" id="score-80" onclick="setMinScore(80,this)">80+</button>
-    <button class="tab" id="score-85" onclick="setMinScore(85,this)">85+</button>
-    <button class="tab" id="score-90" onclick="setMinScore(90,this)">90+</button>
+  <h1 style="font-size:22px;font-weight:800;margin-bottom:4px;" id="deals-title">💑 Affordable Deals for Couples</h1>
+  <p style="color:#64748b;font-size:13px;margin-bottom:18px;" id="deals-subtitle">Properties under ₪1.5M — ideal for first-time buyers</p>
+  <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+    <button class="stab active" onclick="filterDealsSource('all',this)">All Sources</button>
+    <button class="stab" onclick="filterDealsSource('yad2',this)">🏠 Yad2</button>
+    <button class="stab" onclick="filterDealsSource('madlan',this)">🏢 Madlan</button>
   </div>
   <div id="hotdeals-results" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;"></div>
 </div>
 
-<!-- ========== COMPARE PAGE ========== -->
+<!-- ====== COMPARE ====== -->
 <div id="page-compare" class="page fade-in" style="padding-top:20px;">
-  <h1 style="font-size:22px;font-weight:800;margin-bottom:6px;">⚖️ Compare Areas</h1>
-  <p style="color:#64748b;font-size:13px;margin-bottom:20px;">Select 2-4 neighborhoods to compare side by side</p>
-
+  <h1 style="font-size:22px;font-weight:800;margin-bottom:4px;">⚖️ Compare Areas</h1>
+  <p style="color:#64748b;font-size:13px;margin-bottom:20px;" id="compare-subtitle">Compare affordability for couples across Israeli cities</p>
   <div class="card" style="padding:22px;margin-bottom:22px;">
-    <h3 style="font-weight:700;margin-bottom:12px;">Select Areas (max 4)</h3>
-    <div id="area-buttons" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
-    <button class="btn btn-primary" style="margin-top:18px;" onclick="runComparison()">Compare Now</button>
+    <h3 style="font-weight:700;margin-bottom:12px;">Select up to 4 areas</h3>
+    <div id="area-buttons" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;"></div>
+    <button class="btn btn-primary" onclick="runComparison()">Compare Now</button>
   </div>
-
   <div id="comparison-result" style="display:none;">
-    <h2 id="comparison-title" style="font-size:18px;font-weight:800;margin-bottom:16px;"></h2>
-    <div id="comparison-cards" style="display:grid;gap:16px;margin-bottom:24px;"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <h2 id="comparison-title" style="font-size:17px;font-weight:800;margin-bottom:16px;"></h2>
+    <div id="comparison-cards" style="display:grid;gap:14px;margin-bottom:22px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
       <div class="card" style="padding:20px;">
-        <h3 style="font-weight:700;margin-bottom:16px;">Average Price</h3>
-        <div id="price-chart" style="display:flex;align-items:flex-end;gap:12px;height:180px;padding-bottom:10px;"></div>
+        <h3 style="font-weight:700;margin-bottom:16px;" id="chart1-title">Average Price</h3>
+        <div id="price-chart" style="display:flex;align-items:flex-end;gap:10px;height:160px;"></div>
       </div>
       <div class="card" style="padding:20px;">
-        <h3 style="font-weight:700;margin-bottom:16px;">Price per sqm</h3>
-        <div id="sqm-chart" style="display:flex;align-items:flex-end;gap:12px;height:180px;padding-bottom:10px;"></div>
+        <h3 style="font-weight:700;margin-bottom:16px;" id="chart2-title">Price per sqm</h3>
+        <div id="sqm-chart" style="display:flex;align-items:flex-end;gap:10px;height:160px;"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ========== FAVORITES PAGE ========== -->
+<!-- ====== FAVORITES ====== -->
 <div id="page-favorites" class="page fade-in" style="padding-top:20px;">
-  <h1 style="font-size:22px;font-weight:800;margin-bottom:6px;">❤️ Saved Listings</h1>
+  <h1 style="font-size:22px;font-weight:800;margin-bottom:4px;">❤️ Saved Listings</h1>
   <p id="fav-count" style="color:#64748b;font-size:13px;margin-bottom:18px;"></p>
   <div id="favorites-list" style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;"></div>
   <div id="fav-empty" style="display:none;text-align:center;padding:60px 20px;">
     <p style="font-size:48px;">🏠</p>
     <p style="font-size:18px;font-weight:700;margin-top:12px;">No saved listings yet</p>
-    <p style="color:#94a3b8;margin-top:6px;">Click the heart ❤️ on any listing to save it here</p>
+    <p style="color:#94a3b8;margin-top:6px;">Click the ❤️ on any listing to save it here</p>
   </div>
 </div>
 
-<!-- ========== AGENTS PAGE ========== -->
+<!-- ====== AGENTS ====== -->
 <div id="page-agents" class="page fade-in" style="padding-top:20px;">
-  <h1 style="font-size:22px;font-weight:800;margin-bottom:6px;">🤖 AI Agent Dashboard</h1>
-  <p style="color:#64748b;font-size:13px;margin-bottom:22px;">Your agents are scanning 24/7 and alerting you to the best deals</p>
-
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;">
-    <div class="card" style="padding:20px;">
-      <p style="font-size:13px;color:#64748b;font-weight:600;">DEALS FOUND TODAY</p>
-      <p style="font-size:36px;font-weight:800;color:#2563eb;margin-top:4px;">5</p>
-      <p style="font-size:12px;color:#16a34a;font-weight:600;">↑ 2 more than yesterday</p>
-    </div>
-    <div class="card" style="padding:20px;">
-      <p style="font-size:13px;color:#64748b;font-weight:600;">LISTINGS SCANNED</p>
-      <p style="font-size:36px;font-weight:800;color:#7c3aed;margin-top:4px;">1,247</p>
-      <p style="font-size:12px;color:#64748b;">Last run: 12 minutes ago</p>
-    </div>
-  </div>
-
-  <h3 style="font-size:16px;font-weight:700;margin-bottom:14px;">Agent Status</h3>
+  <h1 style="font-size:22px;font-weight:800;margin-bottom:4px;">🤖 AI Agent Dashboard</h1>
+  <p style="color:#64748b;font-size:13px;margin-bottom:22px;" id="agents-subtitle">Scanning 24/7 for affordable first homes</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;" id="agent-stats"></div>
+  <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">Agent Status</h3>
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;" id="agent-cards"></div>
-
   <div class="card" style="padding:22px;">
     <h3 style="font-weight:700;margin-bottom:16px;">🎯 Your Agent Preferences</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div>
-        <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">AREAS TO MONITOR</label>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <span style="background:#dbeafe;color:#1d4ed8;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;">Tel Aviv</span>
-          <span style="background:#dbeafe;color:#1d4ed8;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;">Ramat Gan</span>
-          <span style="background:#dbeafe;color:#1d4ed8;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;">Herzeliya</span>
-        </div>
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">BUDGET RANGE</label>
-        <p style="font-weight:600;">₪500,000 – ₪1,500,000</p>
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">MIN DEAL SCORE</label>
-        <p style="font-weight:600;">75 / 100</p>
-      </div>
-      <div>
-        <label style="font-size:12px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">NOTIFICATIONS</label>
-        <p style="font-weight:600;">📱 Push + 🔔 In-App</p>
-      </div>
-    </div>
-    <button class="btn btn-primary" style="margin-top:18px;">Save Preferences</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="agent-prefs"></div>
+    <button class="btn btn-primary" style="margin-top:18px;" onclick="showToast('Preferences saved! ✓')">Save Preferences</button>
   </div>
 </div>
 
-<!-- ========== PROFILE PAGE ========== -->
+<!-- ====== PROFILE ====== -->
 <div id="page-profile" class="page fade-in" style="padding-top:20px;">
   <div class="card" style="padding:28px;margin-bottom:20px;display:flex;align-items:center;gap:20px;">
-    <div style="width:72px;height:72px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#1d4ed8;">I</div>
+    <div id="profile-avatar" style="width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;"></div>
     <div>
-      <h1 style="font-size:20px;font-weight:800;">Israeli Investor</h1>
-      <p style="color:#64748b;font-size:13px;margin-top:2px;">Looking for great deals in Tel Aviv area</p>
-      <span style="background:#fef9c3;color:#854d0e;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;display:inline-block;margin-top:8px;">Free Plan</span>
+      <h1 style="font-size:20px;font-weight:800;" id="profile-name">SmartBuy User</h1>
+      <p style="color:#64748b;font-size:13px;margin-top:2px;" id="profile-desc"></p>
+      <span id="profile-badge" style="font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;display:inline-block;margin-top:8px;"></span>
     </div>
   </div>
-
-  <h2 style="font-size:17px;font-weight:800;margin-bottom:16px;">💎 Choose Your Plan</h2>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
-    <div class="card" style="padding:22px;border:2px solid #e2e8f0;">
-      <p style="font-weight:700;font-size:16px;">Free</p>
-      <p style="font-size:26px;font-weight:800;margin:8px 0;">$0</p>
-      <ul style="font-size:13px;color:#475569;line-height:2;">
-        <li>✓ Basic search</li>
-        <li>✓ 1 comparison/day</li>
-        <li>✓ Browse listings</li>
-        <li style="color:#cbd5e1;">✗ Agent alerts</li>
-      </ul>
-      <div style="background:#f1f5f9;color:#64748b;text-align:center;padding:10px;border-radius:10px;font-weight:600;font-size:13px;margin-top:14px;">Current Plan</div>
+  <h2 style="font-size:17px;font-weight:800;margin-bottom:14px;">💎 Choose Your Plan</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+    <div class="card" style="padding:20px;border:2px solid #e2e8f0;">
+      <p style="font-weight:700;font-size:15px;">Free</p>
+      <p style="font-size:24px;font-weight:800;margin:8px 0;">$0</p>
+      <ul style="font-size:13px;color:#475569;line-height:2;"><li>✓ Basic search</li><li>✓ 1 comparison/day</li><li style="color:#cbd5e1;">✗ Agent alerts</li></ul>
+      <div style="background:#f1f5f9;text-align:center;padding:10px;border-radius:10px;font-weight:600;font-size:13px;margin-top:14px;color:#64748b;">Current Plan</div>
     </div>
-    <div class="card" style="padding:22px;border:2px solid #2563eb;">
-      <p style="font-weight:700;font-size:16px;">Premium ⭐</p>
-      <p style="font-size:26px;font-weight:800;margin:8px 0;">$9.99<span style="font-size:13px;font-weight:400;color:#64748b;">/mo</span></p>
-      <ul style="font-size:13px;color:#475569;line-height:2;">
-        <li>✓ Unlimited comparisons</li>
-        <li>✓ Agent alerts (all sources)</li>
-        <li>✓ Email digest</li>
-        <li>✓ Price drop alerts</li>
-      </ul>
-      <button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="showToast('Upgrade flow coming soon!')">Upgrade →</button>
+    <div class="card" style="padding:20px;border:2px solid #2563eb;">
+      <p style="font-weight:700;font-size:15px;">Premium ⭐</p>
+      <p style="font-size:24px;font-weight:800;margin:8px 0;">$9.99<span style="font-size:12px;color:#64748b;">/mo</span></p>
+      <ul style="font-size:13px;color:#475569;line-height:2;"><li>✓ Unlimited comparisons</li><li>✓ Agent alerts</li><li>✓ Email digest</li></ul>
+      <button class="btn btn-primary" style="width:100%;margin-top:14px;" onclick="showToast('Upgrade coming soon!')">Upgrade →</button>
     </div>
-    <div class="card" style="padding:22px;border:2px solid #7c3aed;">
-      <p style="font-weight:700;font-size:16px;">Investor 💎</p>
-      <p style="font-size:26px;font-weight:800;margin:8px 0;">$19.99<span style="font-size:13px;font-weight:400;color:#64748b;">/mo</span></p>
-      <ul style="font-size:13px;color:#475569;line-height:2;">
-        <li>✓ Everything in Premium</li>
-        <li>✓ Investment calculator</li>
-        <li>✓ Market trend reports</li>
-        <li>✓ Priority support</li>
-      </ul>
-      <button class="btn" style="background:#7c3aed;color:white;width:100%;margin-top:14px;" onclick="showToast('Upgrade flow coming soon!')">Upgrade →</button>
+    <div class="card" style="padding:20px;border:2px solid #7c3aed;">
+      <p style="font-weight:700;font-size:15px;">Investor 💎</p>
+      <p style="font-size:24px;font-weight:800;margin:8px 0;">$19.99<span style="font-size:12px;color:#64748b;">/mo</span></p>
+      <ul style="font-size:13px;color:#475569;line-height:2;"><li>✓ Everything in Premium</li><li>✓ ROI calculator</li><li>✓ Market reports</li></ul>
+      <button class="btn" style="background:#7c3aed;color:white;width:100%;margin-top:14px;" onclick="showToast('Upgrade coming soon!')">Upgrade →</button>
     </div>
   </div>
 </div>
 
-<!-- ========== NOTIFICATIONS PAGE ========== -->
+<!-- ====== NOTIFICATIONS ====== -->
 <div id="page-notifications" class="page fade-in" style="padding-top:20px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
     <h1 style="font-size:22px;font-weight:800;">🔔 Notifications</h1>
-    <button class="btn btn-secondary" style="font-size:13px;" onclick="clearNotifications()">Mark all read</button>
+    <button class="btn btn-secondary" style="font-size:13px;" onclick="clearNotifs()">Mark all read</button>
   </div>
   <div id="notif-list" class="card" style="overflow:hidden;"></div>
 </div>
 
-</div><!-- end main container -->
+</div><!-- /main -->
 
 <script>
-// ============ MOCK DATA ============
-const LISTINGS = [
-  { id:1, title:'3-room apartment, renovated', area:'Tel Aviv', neighborhood:'Florentin', price:850000, sqm:85, rooms:3, type:'Apartment', source:'yad2', score:89, vsMarket:-25, emoji:'🏙️', saved:false },
-  { id:2, title:'2-room apartment with balcony', area:'Ramat Gan', neighborhood:'Diamond District', price:720000, sqm:65, rooms:2, type:'Apartment', source:'madlan', score:85, vsMarket:-22, emoji:'🌆', saved:false },
-  { id:3, title:'4-room family apartment', area:'Herzeliya', neighborhood:'Herzeliya Pituach', price:1100000, sqm:110, rooms:4, type:'Apartment', source:'yad2', score:82, vsMarket:-18, emoji:'🏖️', saved:false },
-  { id:4, title:'Studio in city center', area:'Tel Aviv', neighborhood:'Dizengoff', price:590000, sqm:38, rooms:1, type:'Studio', source:'madlan', score:78, vsMarket:-15, emoji:'🌃', saved:false },
-  { id:5, title:'Spacious 5-room penthouse', area:'Jerusalem', neighborhood:'Rehavia', price:1850000, sqm:160, rooms:5, type:'Penthouse', source:'yad2', score:77, vsMarket:-12, emoji:'🕌', saved:false },
-  { id:6, title:'3-room apartment with parking', area:'Haifa', neighborhood:'Carmel', price:680000, sqm:90, rooms:3, type:'Apartment', source:'madlan', score:75, vsMarket:-10, emoji:'⛰️', saved:false },
-  { id:7, title:'2-room apartment, great location', area:'Netanya', neighborhood:'City Center', price:620000, sqm:60, rooms:2, type:'Apartment', source:'yad2', score:72, vsMarket:-8, emoji:'🏄', saved:false },
-  { id:8, title:'Luxury 4-room duplex', area:'Tel Aviv', neighborhood:'North Tel Aviv', price:2200000, sqm:140, rooms:4, type:'House', source:'madlan', score:70, vsMarket:-5, emoji:'🏘️', saved:false },
-  { id:9, title:'3-room apartment, new build', area:'Beer Sheva', neighborhood:'Old City', price:480000, sqm:88, rooms:3, type:'Apartment', source:'yad2', score:68, vsMarket:-3, emoji:'🌅', saved:false },
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const ALL_LISTINGS = [
+  // COUPLE listings (affordable, under ₪1.5M)
+  { id:1,  couple:true,  title:'2-room starter apartment',           area:'Beer Sheva',    neighborhood:'Old City',         price:480000,  sqm:62,  rooms:2, type:'Apartment', source:'yad2',   score:82, vsMarket:-18, emoji:'🌅', saved:false, yield:null },
+  { id:2,  couple:true,  title:'Cozy 2-room with balcony',           area:'Netanya',       neighborhood:'City Center',       price:590000,  sqm:58,  rooms:2, type:'Apartment', source:'madlan', score:79, vsMarket:-15, emoji:'🏄', saved:false, yield:null },
+  { id:3,  couple:true,  title:'2.5-room apartment, renovated',      area:'Haifa',         neighborhood:'Carmel',           price:650000,  sqm:70,  rooms:2, type:'Apartment', source:'yad2',   score:77, vsMarket:-13, emoji:'⛰️', saved:false, yield:null },
+  { id:4,  couple:true,  title:'3-room apartment, great location',   area:'Rishon LeZion', neighborhood:'Old Rishon',        price:720000,  sqm:78,  rooms:3, type:'Apartment', source:'madlan', score:81, vsMarket:-16, emoji:'🌆', saved:false, yield:null },
+  { id:5,  couple:true,  title:'Bright 2-room, new build',           area:'Petah Tikva',   neighborhood:'City Center',       price:780000,  sqm:64,  rooms:2, type:'Apartment', source:'yad2',   score:76, vsMarket:-11, emoji:'🏘️', saved:false, yield:null },
+  { id:6,  couple:true,  title:'3-room apartment with parking',      area:'Ramat Gan',     neighborhood:'Borochov',          price:850000,  sqm:82,  rooms:3, type:'Apartment', source:'madlan', score:85, vsMarket:-22, emoji:'🌇', saved:false, yield:null },
+  { id:7,  couple:true,  title:'Studio in heart of the city',        area:'Tel Aviv',      neighborhood:'Florentine',        price:590000,  sqm:38,  rooms:1, type:'Studio',    source:'yad2',   score:78, vsMarket:-14, emoji:'🏙️', saved:false, yield:null },
+  { id:8,  couple:true,  title:'3-room apartment, quiet street',     area:'Holon',         neighborhood:'Center',           price:790000,  sqm:85,  rooms:3, type:'Apartment', source:'yad2',   score:75, vsMarket:-10, emoji:'🏡', saved:false, yield:null },
+  { id:9,  couple:true,  title:'2-room apartment near the beach',    area:'Bat Yam',       neighborhood:'Seafront',          price:680000,  sqm:55,  rooms:2, type:'Apartment', source:'madlan', score:80, vsMarket:-17, emoji:'🏖️', saved:false, yield:null },
+  // INVESTOR listings (higher value, ROI-focused)
+  { id:10, couple:false, title:'3-room apt — 8.2% rental yield',     area:'Tel Aviv',      neighborhood:'Florentin',         price:850000,  sqm:85,  rooms:3, type:'Apartment', source:'yad2',   score:89, vsMarket:-25, emoji:'🏙️', saved:false, yield:'8.2%' },
+  { id:11, couple:false, title:'4-room family home, high demand',    area:'Ramat Gan',     neighborhood:'Diamond District',  price:1100000, sqm:110, rooms:4, type:'Apartment', source:'madlan', score:85, vsMarket:-22, emoji:'🌆', saved:false, yield:'7.1%' },
+  { id:12, couple:false, title:'Herzeliya beachside investment',      area:'Herzeliya',     neighborhood:'Herzeliya Pituach', price:1950000, sqm:120, rooms:4, type:'Apartment', source:'yad2',   score:82, vsMarket:-18, emoji:'🏖️', saved:false, yield:'6.8%' },
+  { id:13, couple:false, title:'Jerusalem — tourist rental goldmine', area:'Jerusalem',     neighborhood:'City Center',       price:1400000, sqm:95,  rooms:3, type:'Apartment', source:'madlan', score:80, vsMarket:-15, emoji:'🕌', saved:false, yield:'9.1%' },
+  { id:14, couple:false, title:'Luxury penthouse, sea view',         area:'Netanya',       neighborhood:'Seafront',          price:2800000, sqm:200, rooms:6, type:'Penthouse', source:'yad2',   score:77, vsMarket:-12, emoji:'🌊', saved:false, yield:'5.4%' },
+  { id:15, couple:false, title:'Haifa port area — rising market',    area:'Haifa',         neighborhood:'Port Area',         price:780000,  sqm:90,  rooms:3, type:'Apartment', source:'madlan', score:83, vsMarket:-20, emoji:'⛵', saved:false, yield:'7.8%' },
+  { id:16, couple:false, title:'4-room duplex, Givatayim',           area:'Ramat Gan',     neighborhood:'Givatayim',         price:1650000, sqm:130, rooms:4, type:'House',     source:'yad2',   score:76, vsMarket:-11, emoji:'🏘️', saved:false, yield:'6.2%' },
 ];
 
 const AREA_DATA = {
-  'Tel Aviv': { avgPrice:2500000, pricePerSqm:28000, avgRent:8500, popularity:95, trend:'+8.2%' },
-  'Ramat Gan': { avgPrice:1800000, pricePerSqm:20000, avgRent:6500, popularity:85, trend:'+6.1%' },
-  'Herzeliya': { avgPrice:2200000, pricePerSqm:24000, avgRent:7800, popularity:80, trend:'+5.8%' },
-  'Jerusalem': { avgPrice:2000000, pricePerSqm:22000, avgRent:7200, popularity:90, trend:'+7.3%' },
-  'Haifa': { avgPrice:1200000, pricePerSqm:13000, avgRent:4500, popularity:75, trend:'+4.2%' },
-  'Netanya': { avgPrice:1400000, pricePerSqm:15000, avgRent:5200, popularity:68, trend:'+3.9%' },
-  'Beer Sheva': { avgPrice:900000, pricePerSqm:10000, avgRent:3800, popularity:60, trend:'+5.5%' },
+  'Tel Aviv':      { avgPrice:2500000, pricePerSqm:28000, avgRent:8500,  popularity:95, trend:'+8.2%', affordability:'Low',    coupleScore:55 },
+  'Ramat Gan':     { avgPrice:1800000, pricePerSqm:20000, avgRent:6500,  popularity:85, trend:'+6.1%', affordability:'Medium', coupleScore:72 },
+  'Herzeliya':     { avgPrice:2200000, pricePerSqm:24000, avgRent:7800,  popularity:80, trend:'+5.8%', affordability:'Low',    coupleScore:58 },
+  'Jerusalem':     { avgPrice:2000000, pricePerSqm:22000, avgRent:7200,  popularity:90, trend:'+7.3%', affordability:'Medium', coupleScore:65 },
+  'Haifa':         { avgPrice:1200000, pricePerSqm:13000, avgRent:4500,  popularity:75, trend:'+4.2%', affordability:'High',   coupleScore:85 },
+  'Netanya':       { avgPrice:1400000, pricePerSqm:15000, avgRent:5200,  popularity:68, trend:'+3.9%', affordability:'High',   coupleScore:80 },
+  'Beer Sheva':    { avgPrice:900000,  pricePerSqm:10000, avgRent:3800,  popularity:60, trend:'+5.5%', affordability:'High',   coupleScore:92 },
+  'Rishon LeZion': { avgPrice:1500000, pricePerSqm:16000, avgRent:5600,  popularity:72, trend:'+4.8%', affordability:'Medium', coupleScore:75 },
 };
 
+const NOTIFICATIONS_COUPLE = [
+  { icon:'💰', title:'Affordable Deal! Ramat Gan, Borochov', body:'₪850,000 · 3 rooms · Score 85/100 · 22% below market', time:'5 min ago', read:false },
+  { icon:'💰', title:'New Listing! Bat Yam near the beach', body:'₪680,000 · 2 rooms · First-time buyer friendly', time:'32 min ago', read:false },
+  { icon:'📉', title:'Price Drop! Netanya apartment', body:'Dropped from ₪650K → ₪590K — now in your budget!', time:'2 hr ago', read:false },
+  { icon:'🤖', title:'Agent scan complete', body:'Found 3 affordable homes matching your budget today', time:'12 min ago', read:true },
+];
+const NOTIFICATIONS_INVESTOR = [
+  { icon:'🔥', title:'HOT DEAL! Tel Aviv, Florentin', body:'₪850,000 · Score 89/100 · 25% below market · Yield 8.2%', time:'2 min ago', read:false },
+  { icon:'🔥', title:'HOT DEAL! Jerusalem tourist rental', body:'₪1,400,000 · Score 80/100 · Yield 9.1%', time:'18 min ago', read:false },
+  { icon:'📉', title:'Price Drop! Haifa Port Area', body:'Dropped ₪80K — now ₪780K. Rental yield 7.8%', time:'1 hr ago', read:false },
+  { icon:'🤖', title:'Agents scanned 1,247 listings', body:'5 hot investment deals found today', time:'12 min ago', read:true },
+];
+
 const AGENTS_LIST = [
-  { name:'🏠 Yad2', phase:'MVP', status:'active', found:3, lastRun:'12 min ago' },
-  { name:'🏢 Madlan', phase:'MVP', status:'active', found:2, lastRun:'14 min ago' },
-  { name:'👥 Facebook Groups', phase:'Phase 2', status:'coming', found:0, lastRun:'—' },
-  { name:'📸 Instagram', phase:'Phase 2', status:'coming', found:0, lastRun:'—' },
-  { name:'🎵 TikTok', phase:'Phase 2', status:'coming', found:0, lastRun:'—' },
-  { name:'🌍 RE/MAX', phase:'Phase 3', status:'coming', found:0, lastRun:'—' },
-  { name:"💎 Sotheby's", phase:'Phase 3', status:'coming', found:0, lastRun:'—' },
-  { name:'🏡 Airbnb', phase:'Phase 3', status:'coming', found:0, lastRun:'—' },
+  { name:'🏠 Yad2',          phase:'MVP',     status:'active', found:3, lastRun:'12 min ago' },
+  { name:'🏢 Madlan',        phase:'MVP',     status:'active', found:2, lastRun:'14 min ago' },
+  { name:'👥 Facebook',      phase:'Phase 2', status:'soon',   found:0, lastRun:'—' },
+  { name:'📸 Instagram',     phase:'Phase 2', status:'soon',   found:0, lastRun:'—' },
+  { name:'🎵 TikTok',        phase:'Phase 2', status:'soon',   found:0, lastRun:'—' },
+  { name:"🌍 RE/MAX",        phase:'Phase 3', status:'soon',   found:0, lastRun:'—' },
+  { name:"💎 Sotheby's",     phase:'Phase 3', status:'soon',   found:0, lastRun:'—' },
+  { name:'🏡 Airbnb',        phase:'Phase 3', status:'soon',   found:0, lastRun:'—' },
 ];
 
-const NOTIFICATIONS = [
-  { icon:'🔥', title:'HOT DEAL! Tel Aviv, Florentin', body:'₪850,000 | Score: 89/100 | 25% below market', time:'2 min ago', read:false },
-  { icon:'🔥', title:'HOT DEAL! Ramat Gan, Diamond District', body:'₪720,000 | Score: 85/100 | 22% below market', time:'18 min ago', read:false },
-  { icon:'🔥', title:'HOT DEAL! Herzeliya Pituach', body:'₪1,100,000 | Score: 82/100 | 18% below market', time:'1 hr ago', read:false },
-  { icon:'📉', title:'Price Drop Alert!', body:'Netanya apartment dropped from ₪680K → ₪620K', time:'3 hr ago', read:false },
-  { icon:'🤖', title:'Agents completed scan', body:'1,247 listings scanned. 5 hot deals found.', time:'12 min ago', read:true },
-];
-
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let mode = 'couple'; // 'couple' | 'investor'
 let selectedAreas = [];
-let hotDealsSource = 'all';
-let minScore = 75;
+let dealsSource = 'all';
 let currentPage = 'home';
+const BAR_COLORS = ['#2563eb','#7c3aed','#ec4899','#16a34a'];
 
-// ============ LISTING CARD ============
-function makeCard(listing, showDrop=false) {
-  const scoreColor = listing.score >= 80 ? '#dc2626' : listing.score >= 75 ? '#ca8a04' : '#16a34a';
-  const scoreBg = listing.score >= 80 ? '#fef2f2' : listing.score >= 75 ? '#fefce8' : '#f0fdf4';
-  const savedIcon = listing.saved ? '❤️' : '🤍';
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function listings() {
+  return ALL_LISTINGS.filter(l => mode === 'couple' ? l.couple : !l.couple);
+}
+
+function accentColor() {
+  return mode === 'couple' ? '#be185d' : '#2563eb';
+}
+
+// ─── CARD ─────────────────────────────────────────────────────────────────────
+function makeCard(l) {
+  const sc = l.score;
+  const scColor = sc >= 80 ? '#dc2626' : sc >= 75 ? '#ca8a04' : '#16a34a';
+  const scBg    = sc >= 80 ? '#fef2f2' : sc >= 75 ? '#fefce8' : '#f0fdf4';
   return `
-  <div class="card fade-in" style="overflow:hidden;cursor:pointer;" onclick="">
-    <div style="background:#e2e8f0;height:170px;display:flex;align-items:center;justify-content:center;font-size:60px;position:relative;">
-      ${listing.emoji}
-      <div style="position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;">
-        <span style="background:${scoreBg};color:${scoreColor};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:800;">
-          ${listing.score>=80?'🔥':'⭐'} ${listing.score}/100
-        </span>
-        <span style="background:rgba(0,0,0,0.6);color:white;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;">${listing.source}</span>
+  <div class="card fade-in" style="overflow:hidden;">
+    <div style="background:#e2e8f0;height:165px;display:flex;align-items:center;justify-content:center;font-size:56px;position:relative;">
+      ${l.emoji}
+      <div style="position:absolute;top:8px;left:8px;display:flex;gap:5px;flex-wrap:wrap;">
+        <span style="background:${scBg};color:${scColor};padding:2px 9px;border-radius:999px;font-size:11px;font-weight:800;">${sc>=80?'🔥':'⭐'} ${sc}/100</span>
+        <span style="background:rgba(0,0,0,0.55);color:white;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:600;">${l.source}</span>
       </div>
-      <span class="heart" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.9);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;"
-        onclick="event.stopPropagation();toggleSave(${listing.id},this)">${savedIcon}</span>
+      <span class="heart" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.92);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;"
+        onclick="toggleSave(${l.id},this)">${l.saved?'❤️':'🤍'}</span>
+      ${l.yield ? `<span style="position:absolute;bottom:8px;right:8px;background:#16a34a;color:white;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:800;">📈 ${l.yield} yield</span>` : ''}
     </div>
-    <div style="padding:16px;">
-      <p style="font-size:20px;font-weight:800;color:#1d4ed8;">₪${listing.price.toLocaleString()}</p>
-      <p style="font-size:12px;font-weight:600;color:#16a34a;margin-top:2px;">⬇️ ${Math.abs(listing.vsMarket)}% below market average</p>
-      <p style="font-size:13px;color:#334155;margin-top:6px;font-weight:500;">${listing.title}</p>
-      <p style="font-size:12px;color:#64748b;margin-top:4px;">📍 ${listing.neighborhood}, ${listing.area}</p>
-      <div style="display:flex;gap:12px;margin-top:8px;font-size:12px;color:#64748b;">
-        <span>🛏 ${listing.rooms} rooms</span>
-        <span>📐 ${listing.sqm} sqm</span>
-        <span>🏷️ ${listing.type}</span>
+    <div style="padding:14px;">
+      <p style="font-size:19px;font-weight:800;color:${accentColor()};">₪${l.price.toLocaleString()}</p>
+      <p style="font-size:11px;font-weight:600;color:#16a34a;margin-top:2px;">⬇️ ${Math.abs(l.vsMarket)}% below market</p>
+      <p style="font-size:13px;color:#334155;margin-top:5px;font-weight:500;">${l.title}</p>
+      <p style="font-size:12px;color:#64748b;margin-top:3px;">📍 ${l.neighborhood}, ${l.area}</p>
+      <div style="display:flex;gap:10px;margin-top:7px;font-size:12px;color:#64748b;">
+        <span>🛏 ${l.rooms}</span><span>📐 ${l.sqm}sqm</span><span>₪${Math.round(l.price/l.sqm).toLocaleString()}/sqm</span>
       </div>
+      ${mode==='couple' ? `<div style="background:#fdf2f8;border-radius:8px;padding:6px 10px;margin-top:8px;font-size:11px;color:#9d174d;font-weight:600;">💑 Est. mortgage: ₪${Math.round(l.price*0.0035).toLocaleString()}/mo</div>` : ''}
     </div>
   </div>`;
 }
 
-// ============ PAGE NAVIGATION ============
-function showPage(name, clickedEl) {
+// ─── MODE SWITCH ──────────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-couple').classList.toggle('active', m==='couple');
+  document.getElementById('btn-investor').classList.toggle('active', m==='investor');
+  applyModeText();
+  refreshCurrentPage();
+}
+
+function applyModeText() {
+  const c = mode === 'couple';
+
+  // hero
+  document.getElementById('hero-couple').style.display   = c ? '' : 'none';
+  document.getElementById('hero-investor').style.display = c ? 'none' : '';
+
+  // quick links
+  document.getElementById('ql-deals-icon').textContent  = c ? '💑' : '🔥';
+  document.getElementById('ql-deals-label').textContent  = c ? 'Affordable Deals' : 'Hot Deals';
+  document.getElementById('home-section-title').textContent = c ? '💑 Best Deals for Couples' : '🔥 Top Investment Deals';
+
+  // search
+  document.getElementById('search-title').textContent = c ? '🔍 Search Affordable Homes' : '🔍 Search Investment Properties';
+  document.getElementById('search-mode-tag').textContent = c ? '💑 Couples Mode' : '📈 Investor Mode';
+  document.getElementById('search-mode-tag').style.background = c ? '#fce7f3' : '#dbeafe';
+  document.getElementById('search-mode-tag').style.color      = c ? '#be185d' : '#1e40af';
+
+  // hot deals
+  document.getElementById('deals-title').textContent    = c ? '💑 Affordable Deals for Couples' : '🔥 Hot Investment Deals';
+  document.getElementById('deals-subtitle').textContent = c ? 'Properties under ₪1.5M — ideal for first-time buyers' : 'Best ROI properties · Deal Score 75+ · Priced below market';
+
+  // compare
+  document.getElementById('compare-subtitle').textContent = c ? 'Compare affordability for couples across Israeli cities' : 'Compare investment potential & rental yields across areas';
+
+  // agents
+  document.getElementById('agents-subtitle').textContent = c ? 'Scanning 24/7 for affordable first homes' : 'Scanning 24/7 for high-ROI investment properties';
+
+  // profile
+  document.getElementById('profile-avatar').style.background = c ? '#fce7f3' : '#dbeafe';
+  document.getElementById('profile-avatar').style.color = c ? '#be185d' : '#1e40af';
+  document.getElementById('profile-avatar').textContent = c ? '💑' : '📈';
+  document.getElementById('profile-name').textContent   = c ? 'Young Couple' : 'Investor';
+  document.getElementById('profile-desc').textContent   = c ? 'Looking for our first home together 🏡' : 'Building a real estate portfolio in Israel';
+  document.getElementById('profile-badge').textContent  = c ? '💑 First-Time Buyer' : '📈 Active Investor';
+  document.getElementById('profile-badge').style.background = c ? '#fce7f3' : '#dbeafe';
+  document.getElementById('profile-badge').style.color      = c ? '#be185d' : '#1e40af';
+
+  // CTA
+  document.getElementById('home-cta').innerHTML = c
+    ? `<div style="background:linear-gradient(135deg,#be185d,#ec4899);border-radius:16px;padding:22px;color:white;">
+        <h3 style="font-size:16px;font-weight:700;">First-time buyer? We've got you 💑</h3>
+        <p style="font-size:13px;opacity:0.9;margin-top:4px;">Upgrade to Premium and let agents find affordable homes matching your budget automatically.</p>
+        <button class="btn" style="background:white;color:#be185d;font-weight:700;margin-top:12px;" onclick="showPage('profile',null)">View Plans →</button>
+      </div>`
+    : `<div style="background:linear-gradient(135deg,#1e3a8a,#2563eb);border-radius:16px;padding:22px;color:white;">
+        <h3 style="font-size:16px;font-weight:700;">Maximize your ROI with Investor Plan 💎</h3>
+        <p style="font-size:13px;opacity:0.9;margin-top:4px;">Get rental yield calculations, market trend reports, and unlimited agent alerts for $19.99/mo.</p>
+        <button class="btn" style="background:white;color:#1e3a8a;font-weight:700;margin-top:12px;" onclick="showPage('profile',null)">View Plans →</button>
+      </div>`;
+}
+
+// ─── PAGE NAV ─────────────────────────────────────────────────────────────────
+function showPage(name, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  if (clickedEl && clickedEl.classList && clickedEl.classList.contains('nav-link')) {
-    clickedEl.classList.add('active');
-  }
+  if (el && el.classList && el.classList.contains('nav-link')) el.classList.add('active');
   currentPage = name;
-  if (name === 'home') renderHome();
-  if (name === 'search') renderSearch();
-  if (name === 'hotdeals') renderHotDeals();
-  if (name === 'compare') renderCompareAreas();
-  if (name === 'favorites') renderFavorites();
-  if (name === 'agents') renderAgents();
-  if (name === 'notifications') renderNotifications();
+  refreshCurrentPage();
 }
 
-// ============ HOME ============
+function refreshCurrentPage() {
+  const p = currentPage;
+  if (p==='home')          renderHome();
+  if (p==='search')        filterListings();
+  if (p==='hotdeals')      renderHotDeals();
+  if (p==='compare')       renderCompareAreas();
+  if (p==='favorites')     renderFavorites();
+  if (p==='agents')        renderAgents();
+  if (p==='notifications') renderNotifications();
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
 function renderHome() {
-  const hot = LISTINGS.filter(l => l.score >= 75).slice(0,3);
-  document.getElementById('home-listings').innerHTML = hot.map(l => makeCard(l)).join('');
+  const top = listings().sort((a,b) => b.score-a.score).slice(0,3);
+  document.getElementById('home-listings').innerHTML = top.map(makeCard).join('');
 }
 
-// ============ SEARCH ============
-function renderSearch() { filterListings(); }
-
+// ─── SEARCH ───────────────────────────────────────────────────────────────────
 function filterListings() {
-  const q = (document.getElementById('search-input')?.value || '').toLowerCase();
-  const type = document.getElementById('filter-type')?.value || '';
-  const area = document.getElementById('filter-area')?.value || '';
-  const min = Number(document.getElementById('filter-min')?.value || 0);
-  const max = Number(document.getElementById('filter-max')?.value || 9999999999);
-  const sort = document.getElementById('filter-sort')?.value || 'newest';
+  const q    = (document.getElementById('search-input')?.value||'').toLowerCase();
+  const area = document.getElementById('filter-area')?.value||'';
+  const type = document.getElementById('filter-type')?.value||'';
+  const min  = Number(document.getElementById('filter-min')?.value||0);
+  const max  = Number(document.getElementById('filter-max')?.value||999999999);
+  const sort = document.getElementById('filter-sort')?.value||'price-asc';
 
-  let results = LISTINGS.filter(l => {
-    const matchQ = !q || l.title.toLowerCase().includes(q) || l.area.toLowerCase().includes(q) || l.neighborhood.toLowerCase().includes(q);
-    const matchType = !type || l.type === type;
-    const matchArea = !area || l.area === area;
-    const matchMin = !min || l.price >= min;
-    const matchMax = !max || l.price <= max;
-    return matchQ && matchType && matchArea && matchMin && matchMax;
+  let res = listings().filter(l => {
+    return (!q   || l.title.toLowerCase().includes(q) || l.area.toLowerCase().includes(q) || l.neighborhood.toLowerCase().includes(q))
+        && (!area || l.area === area)
+        && (!type || l.type === type)
+        && (!min  || l.price >= min)
+        && (!max  || l.price <= max);
   });
 
-  if (sort === 'price-asc') results.sort((a,b) => a.price - b.price);
-  else if (sort === 'price-desc') results.sort((a,b) => b.price - a.price);
-  else if (sort === 'score') results.sort((a,b) => b.score - a.score);
+  if (sort==='price-asc')  res.sort((a,b)=>a.price-b.price);
+  if (sort==='price-desc') res.sort((a,b)=>b.price-a.price);
+  if (sort==='score')      res.sort((a,b)=>b.score-a.score);
 
-  document.getElementById('search-count').textContent = `${results.length} listing${results.length !== 1 ? 's' : ''} found`;
-  document.getElementById('search-results').innerHTML = results.length
-    ? results.map(l => makeCard(l)).join('')
-    : '<div style="grid-column:span 3;text-align:center;padding:60px;color:#94a3b8;"><p style="font-size:40px">🔍</p><p style="font-weight:700;margin-top:10px;">No listings found</p><p style="font-size:13px;">Try adjusting your filters</p></div>';
+  document.getElementById('search-count').textContent = `${res.length} listing${res.length!==1?'s':''} found`;
+  document.getElementById('search-results').innerHTML = res.length
+    ? res.map(makeCard).join('')
+    : `<div style="grid-column:span 3;text-align:center;padding:60px;color:#94a3b8;"><p style="font-size:40px">🔍</p><p style="font-weight:700;margin-top:10px;">No listings found</p><p style="font-size:13px;margin-top:4px;">Try adjusting your filters</p></div>`;
 }
 
 function clearFilters() {
-  document.getElementById('search-input').value = '';
-  document.getElementById('filter-type').value = '';
-  document.getElementById('filter-area').value = '';
-  document.getElementById('filter-min').value = '';
-  document.getElementById('filter-max').value = '';
-  document.getElementById('filter-sort').value = 'newest';
+  ['search-input','filter-min','filter-max'].forEach(id => document.getElementById(id).value='');
+  ['filter-area','filter-type'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('filter-sort').value='price-asc';
   filterListings();
 }
 
-// ============ HOT DEALS ============
+// ─── HOT DEALS ────────────────────────────────────────────────────────────────
 function renderHotDeals() {
-  let results = LISTINGS.filter(l => l.score >= minScore);
-  if (hotDealsSource !== 'all') results = results.filter(l => l.source === hotDealsSource);
-  results.sort((a,b) => b.score - a.score);
-  document.getElementById('hotdeals-results').innerHTML = results.length
-    ? results.map(l => makeCard(l)).join('')
-    : '<div style="grid-column:span 3;text-align:center;padding:60px;color:#94a3b8;"><p style="font-size:40px">🤖</p><p style="font-weight:700;margin-top:10px;">Agents are scanning...</p><p style="font-size:13px;margin-top:6px;">Deals will appear here when score reaches ' + minScore + '+</p></div>';
+  let res = listings().filter(l => l.score >= 75);
+  if (dealsSource !== 'all') res = res.filter(l => l.source === dealsSource);
+  res.sort((a,b) => b.score - a.score);
+  document.getElementById('hotdeals-results').innerHTML = res.length
+    ? res.map(makeCard).join('')
+    : `<div style="grid-column:span 3;text-align:center;padding:60px;color:#94a3b8;"><p style="font-size:40px">🤖</p><p style="font-weight:700;margin-top:10px;">Agents are scanning...</p></div>`;
 }
 
-function filterHotDeals(src, el) {
-  hotDealsSource = src;
-  document.querySelectorAll('#page-hotdeals .tab').forEach(t => t.classList.remove('active'));
+function filterDealsSource(src, el) {
+  dealsSource = src;
+  document.querySelectorAll('#page-hotdeals .stab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderHotDeals();
 }
 
-function setMinScore(s, el) {
-  minScore = s;
-  document.querySelectorAll('[id^="score-"]').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderHotDeals();
-}
-
-// ============ COMPARE ============
+// ─── COMPARE ──────────────────────────────────────────────────────────────────
 const ALL_AREAS = Object.keys(AREA_DATA);
-const BAR_COLORS = ['#2563eb','#7c3aed','#dc2626','#16a34a'];
 
 function renderCompareAreas() {
-  document.getElementById('area-buttons').innerHTML = ALL_AREAS.map(area => `
-    <button onclick="toggleArea('${area}',this)"
-      style="padding:8px 18px;border-radius:12px;border:2px solid ${selectedAreas.includes(area)?'#2563eb':'#e2e8f0'};
-      background:${selectedAreas.includes(area)?'#2563eb':'white'};
-      color:${selectedAreas.includes(area)?'white':'#334155'};
+  document.getElementById('area-buttons').innerHTML = ALL_AREAS.map(area => {
+    const sel = selectedAreas.includes(area);
+    const color = accentColor();
+    return `<button onclick="toggleArea('${area}')"
+      style="padding:8px 16px;border-radius:12px;border:2px solid ${sel?color:'#e2e8f0'};
+      background:${sel?color:'white'};color:${sel?'white':'#334155'};
       font-weight:600;font-size:13px;cursor:pointer;transition:all 0.15s;">
-      ${area}${selectedAreas.includes(area)?' ✓':''}
-    </button>`).join('');
+      ${area}${sel?' ✓':''}
+    </button>`;
+  }).join('');
 }
 
 function toggleArea(area) {
   if (selectedAreas.includes(area)) {
-    selectedAreas = selectedAreas.filter(a => a !== area);
+    selectedAreas = selectedAreas.filter(a=>a!==area);
   } else if (selectedAreas.length < 4) {
     selectedAreas.push(area);
   } else {
-    showToast('Maximum 4 areas');
-    return;
+    showToast('Maximum 4 areas'); return;
   }
   renderCompareAreas();
 }
 
 function runComparison() {
   if (selectedAreas.length < 2) { showToast('Select at least 2 areas'); return; }
-  const data = selectedAreas.map(a => ({ area: a, ...AREA_DATA[a] }));
+  const data = selectedAreas.map(a => ({ area:a, ...AREA_DATA[a] }));
+  const isCouple = mode === 'couple';
 
   document.getElementById('comparison-title').textContent = selectedAreas.join(' vs ');
   document.getElementById('comparison-result').style.display = 'block';
+  document.getElementById('chart1-title').textContent = isCouple ? 'Average Price (lower = better 💑)' : 'Average Price';
+  document.getElementById('chart2-title').textContent = isCouple ? 'Affordability Score 💑' : 'Rental Yield Estimate';
 
   document.getElementById('comparison-cards').style.gridTemplateColumns = `repeat(${data.length},1fr)`;
   document.getElementById('comparison-cards').innerHTML = data.map((d,i) => `
-    <div class="card" style="padding:20px;text-align:center;border-top:4px solid ${BAR_COLORS[i]};">
-      <h3 style="font-weight:800;color:${BAR_COLORS[i]};font-size:15px;">${d.area}</h3>
-      <p style="font-size:24px;font-weight:800;margin:10px 0;">₪${(d.avgPrice/1000000).toFixed(1)}M</p>
-      <p style="font-size:12px;color:#64748b;">Avg. Price</p>
-      <p style="font-size:16px;font-weight:700;margin-top:10px;">₪${d.pricePerSqm.toLocaleString()}</p>
-      <p style="font-size:12px;color:#64748b;">Per sqm</p>
-      <p style="font-size:14px;font-weight:700;margin-top:10px;color:#16a34a;">${d.trend}</p>
-      <p style="font-size:12px;color:#64748b;">Annual trend</p>
-      <p style="font-size:13px;font-weight:600;margin-top:8px;">Popularity: ${d.popularity}/100</p>
+    <div class="card" style="padding:18px;text-align:center;border-top:4px solid ${BAR_COLORS[i]};">
+      <h3 style="font-weight:800;color:${BAR_COLORS[i]};font-size:14px;">${d.area}</h3>
+      <p style="font-size:22px;font-weight:800;margin:8px 0;">₪${(d.avgPrice/1000000).toFixed(1)}M</p>
+      <p style="font-size:11px;color:#64748b;">Avg. Price</p>
+      ${isCouple
+        ? `<p style="font-size:14px;font-weight:700;margin-top:8px;color:${d.affordability==='High'?'#16a34a':d.affordability==='Medium'?'#ca8a04':'#dc2626'};">${d.affordability} Affordability</p>
+           <p style="font-size:12px;font-weight:700;margin-top:6px;">💑 Couple Score: ${d.coupleScore}/100</p>
+           <p style="font-size:11px;color:#64748b;margin-top:4px;">Est. mortgage: ₪${Math.round(d.avgPrice*0.0035).toLocaleString()}/mo</p>`
+        : `<p style="font-size:14px;font-weight:700;margin-top:8px;color:#16a34a;">~${(d.avgRent/d.avgPrice*100*12).toFixed(1)}% yield</p>
+           <p style="font-size:12px;color:#64748b;margin-top:4px;">Rent: ₪${d.avgRent.toLocaleString()}/mo</p>
+           <p style="font-size:12px;font-weight:600;margin-top:4px;color:#16a34a;">${d.trend} annual</p>`
+      }
     </div>`).join('');
 
-  // Charts
   const maxPrice = Math.max(...data.map(d=>d.avgPrice));
-  const maxSqm = Math.max(...data.map(d=>d.pricePerSqm));
+  const maxCouple = 100;
 
   document.getElementById('price-chart').innerHTML = data.map((d,i) => {
-    const h = Math.round((d.avgPrice/maxPrice)*150);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <div style="font-size:11px;font-weight:700;color:#475569;">₪${(d.avgPrice/1000000).toFixed(1)}M</div>
+    const h = Math.round((d.avgPrice/maxPrice)*145);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;">
+      <div style="font-size:10px;font-weight:700;color:#475569;">₪${(d.avgPrice/1000000).toFixed(1)}M</div>
       <div class="bar" style="width:100%;height:${h}px;background:${BAR_COLORS[i]};"></div>
-      <div style="font-size:11px;font-weight:600;text-align:center;">${d.area.split(' ')[0]}</div>
+      <div style="font-size:10px;font-weight:600;text-align:center;">${d.area.split(' ')[0]}</div>
     </div>`;
   }).join('');
 
   document.getElementById('sqm-chart').innerHTML = data.map((d,i) => {
-    const h = Math.round((d.pricePerSqm/maxSqm)*150);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <div style="font-size:11px;font-weight:700;color:#475569;">₪${d.pricePerSqm.toLocaleString()}</div>
+    const val = isCouple ? d.coupleScore : Math.round(d.avgRent/d.avgPrice*100*12*10);
+    const maxVal = isCouple ? maxCouple : Math.max(...data.map(x => Math.round(x.avgRent/x.avgPrice*100*12*10)));
+    const h = Math.round((val/maxVal)*145);
+    const label = isCouple ? `${d.coupleScore}/100` : `${(d.avgRent/d.avgPrice*100*12).toFixed(1)}%`;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;">
+      <div style="font-size:10px;font-weight:700;color:#475569;">${label}</div>
       <div class="bar" style="width:100%;height:${h}px;background:${BAR_COLORS[i]};"></div>
-      <div style="font-size:11px;font-weight:600;text-align:center;">${d.area.split(' ')[0]}</div>
+      <div style="font-size:10px;font-weight:600;text-align:center;">${d.area.split(' ')[0]}</div>
     </div>`;
   }).join('');
 }
 
-// ============ FAVORITES ============
+// ─── FAVORITES ────────────────────────────────────────────────────────────────
 function toggleSave(id, el) {
-  const listing = LISTINGS.find(l => l.id === id);
-  if (!listing) return;
-  listing.saved = !listing.saved;
-  el.textContent = listing.saved ? '❤️' : '🤍';
-  showToast(listing.saved ? '❤️ Saved to favorites!' : 'Removed from favorites');
-  if (currentPage === 'favorites') renderFavorites();
+  const l = ALL_LISTINGS.find(x=>x.id===id);
+  if (!l) return;
+  l.saved = !l.saved;
+  el.textContent = l.saved ? '❤️' : '🤍';
+  showToast(l.saved ? '❤️ Saved!' : 'Removed from saved');
+  if (currentPage==='favorites') renderFavorites();
 }
 
 function renderFavorites() {
-  const saved = LISTINGS.filter(l => l.saved);
-  document.getElementById('fav-count').textContent = `${saved.length} saved listing${saved.length !== 1 ? 's' : ''}`;
-  if (saved.length === 0) {
-    document.getElementById('favorites-list').innerHTML = '';
-    document.getElementById('fav-empty').style.display = 'block';
-  } else {
-    document.getElementById('fav-empty').style.display = 'none';
-    document.getElementById('favorites-list').innerHTML = saved.map(l => makeCard(l)).join('');
-  }
+  const saved = ALL_LISTINGS.filter(l=>l.saved);
+  document.getElementById('fav-count').textContent = `${saved.length} saved listing${saved.length!==1?'s':''}`;
+  document.getElementById('fav-empty').style.display   = saved.length ? 'none' : 'block';
+  document.getElementById('favorites-list').innerHTML  = saved.length ? saved.map(makeCard).join('') : '';
 }
 
-// ============ AGENTS ============
+// ─── AGENTS ───────────────────────────────────────────────────────────────────
 function renderAgents() {
+  const c = mode === 'couple';
+  document.getElementById('agent-stats').innerHTML = `
+    <div class="card" style="padding:18px;"><p style="font-size:12px;color:#64748b;font-weight:600;">${c?'AFFORDABLE HOMES TODAY':'HOT DEALS TODAY'}</p><p style="font-size:34px;font-weight:800;color:${accentColor()};margin-top:4px;">${c?3:5}</p></div>
+    <div class="card" style="padding:18px;"><p style="font-size:12px;color:#64748b;font-weight:600;">LISTINGS SCANNED</p><p style="font-size:34px;font-weight:800;color:#7c3aed;margin-top:4px;">1,247</p><p style="font-size:11px;color:#64748b;">Last run: 12 min ago</p></div>
+    <div class="card" style="padding:18px;"><p style="font-size:12px;color:#64748b;font-weight:600;">${c?'AVG PRICE FOUND':'BEST YIELD FOUND'}</p><p style="font-size:34px;font-weight:800;color:#16a34a;margin-top:4px;">${c?'₪710K':'9.1%'}</p></div>`;
+
   document.getElementById('agent-cards').innerHTML = AGENTS_LIST.map(a => `
-    <div class="card" style="padding:18px;border:2px solid ${a.status==='active'?'#bbf7d0':'#e2e8f0'};background:${a.status==='active'?'#f0fdf4':'#f8fafc'};">
+    <div class="card" style="padding:16px;border:2px solid ${a.status==='active'?'#bbf7d0':'#f1f5f9'};background:${a.status==='active'?'#f0fdf4':'#f8fafc'};">
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-weight:700;font-size:14px;">${a.name}</span>
-        <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:${a.status==='active'?'#dcfce7':'#f1f5f9'};color:${a.status==='active'?'#16a34a':'#94a3b8'};">${a.status==='active'?'● Active':'○ '+a.phase}</span>
+        <span style="font-weight:700;font-size:13px;">${a.name}</span>
+        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${a.status==='active'?'#dcfce7':'#f1f5f9'};color:${a.status==='active'?'#16a34a':'#94a3b8'};">${a.status==='active'?'● Active':'○ '+a.phase}</span>
       </div>
-      ${a.status==='active'?`<p style="font-size:12px;color:#64748b;margin-top:6px;">Found <b>${a.found}</b> deals · Last run: ${a.lastRun}</p>`:`<p style="font-size:12px;color:#cbd5e1;margin-top:6px;">Coming in ${a.phase}</p>`}
+      ${a.status==='active'?`<p style="font-size:11px;color:#64748b;margin-top:5px;">Found <b>${c?Math.ceil(a.found*0.6):a.found}</b> deals · ${a.lastRun}</p>`:`<p style="font-size:11px;color:#cbd5e1;margin-top:5px;">Coming in ${a.phase}</p>`}
     </div>`).join('');
+
+  document.getElementById('agent-prefs').innerHTML = c
+    ? `<div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">AREAS</label>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          ${['Ramat Gan','Beer Sheva','Netanya'].map(a=>`<span style="background:#fce7f3;color:#be185d;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;">${a}</span>`).join('')}
+        </div></div>
+       <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">BUDGET</label><p style="font-weight:600;font-size:14px;">₪0 – ₪1,500,000</p></div>
+       <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">MIN DEAL SCORE</label><p style="font-weight:600;font-size:14px;">75 / 100</p></div>
+       <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">NOTIFICATIONS</label><p style="font-weight:600;font-size:14px;">📱 Push + 🔔 In-App</p></div>`
+    : `<div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">AREAS</label>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          ${['Tel Aviv','Ramat Gan','Herzeliya'].map(a=>`<span style="background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;">${a}</span>`).join('')}
+        </div></div>
+       <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">BUDGET</label><p style="font-weight:600;font-size:14px;">₪500K – ₪3,000,000</p></div>
+       <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">MIN DEAL SCORE</label><p style="font-weight:600;font-size:14px;">75 / 100</p></div>
+       <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:6px;">MIN RENTAL YIELD</label><p style="font-weight:600;font-size:14px;">6% per year</p></div>`;
 }
 
-// ============ NOTIFICATIONS ============
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
 function renderNotifications() {
-  document.getElementById('notif-list').innerHTML = NOTIFICATIONS.map(n => `
+  const notifs = mode === 'couple' ? NOTIFICATIONS_COUPLE : NOTIFICATIONS_INVESTOR;
+  document.getElementById('notif-list').innerHTML = notifs.map(n => `
     <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;gap:14px;align-items:flex-start;background:${n.read?'white':'#eff6ff'};">
-      <span style="font-size:24px;">${n.icon}</span>
+      <span style="font-size:22px;">${n.icon}</span>
       <div style="flex:1;">
-        <p style="font-weight:700;font-size:14px;">${n.title}</p>
-        <p style="font-size:13px;color:#475569;margin-top:2px;">${n.body}</p>
-        <p style="font-size:11px;color:#94a3b8;margin-top:4px;">${n.time}</p>
+        <p style="font-weight:700;font-size:13px;">${n.title}</p>
+        <p style="font-size:12px;color:#475569;margin-top:2px;">${n.body}</p>
+        <p style="font-size:10px;color:#94a3b8;margin-top:3px;">${n.time}</p>
       </div>
-      ${!n.read?'<span style="width:8px;height:8px;border-radius:50%;background:#2563eb;flex-shrink:0;margin-top:6px;"></span>':''}
+      ${!n.read?'<span style="width:8px;height:8px;border-radius:50%;background:#2563eb;flex-shrink:0;margin-top:4px;"></span>':''}
     </div>`).join('');
 }
 
-function clearNotifications() {
-  NOTIFICATIONS.forEach(n => n.read = true);
-  document.getElementById('notif-dot').style.display = 'none';
+function clearNotifs() {
+  const notifs = mode==='couple' ? NOTIFICATIONS_COUPLE : NOTIFICATIONS_INVESTOR;
+  notifs.forEach(n=>n.read=true);
+  document.getElementById('notif-dot').style.display='none';
   renderNotifications();
-  showToast('All notifications marked as read');
+  showToast('All read ✓');
 }
 
-// ============ TOAST ============
+// ─── TOAST ────────────────────────────────────────────────────────────────────
 function showToast(msg) {
   const t = document.createElement('div');
   t.className = 'toast';
   t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2800);
+  setTimeout(()=>t.remove(), 2600);
 }
 
-// ============ INIT ============
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+applyModeText();
 renderHome();
 renderAgents();
 
-// Simulate agent finding a new deal after 4 seconds
-setTimeout(() => {
-  showToast('🔥 Agent found new hot deal in Tel Aviv!');
-}, 4000);
+setTimeout(()=> showToast(mode==='couple' ? '💰 New affordable home found in Ramat Gan!' : '🔥 New hot deal found in Tel Aviv!'), 3500);
 </script>
 </body>
 </html>
