@@ -408,6 +408,13 @@ const INVEST_LISTINGS = [
   { id:15, title:'Haifa port area — rising market',   titleHe:'נמל חיפה — שוק עולה',        area:'Haifa',     neighborhood:'Port Area',         price:780000,  sqm:90,  rooms:3, type:'Apartment', source:'madlan', score:83, vsMarket:-20, emoji:'⛵', saved:false, yieldPct:'7.8%' },
 ];
 
+const AREA_NAME_HE = {
+  'Tel Aviv':'תל אביב', 'Ramat Gan':'רמת גן', 'Herzeliya':'הרצליה',
+  'Jerusalem':'ירושלים', 'Haifa':'חיפה', 'Netanya':'נתניה',
+  'Beer Sheva':'באר שבע', 'Rishon LeZion':'ראשון לציון',
+};
+function areaName(en) { return lang==='he' ? (AREA_NAME_HE[en]||en) : en; }
+
 const AREA_DATA = {
   'Tel Aviv':      { avgPrice:2500000, pricePerSqm:28000, avgRent:8500,  popularity:95, trend:'+8.2%', affordability:'Low',    coupleScore:55 },
   'Ramat Gan':     { avgPrice:1800000, pricePerSqm:20000, avgRent:6500,  popularity:85, trend:'+6.1%', affordability:'Medium', coupleScore:72 },
@@ -784,8 +791,9 @@ function renderCompareAreas() {
   const accent = accentColor();
   document.getElementById('area-buttons').innerHTML = ALL_AREAS.map(area=>{
     const sel=selectedAreas.includes(area);
-    return `<button onclick="toggleArea('${area}')" style="padding:7px 15px;border-radius:12px;border:2px solid ${sel?accent:'#e2e8f0'};background:${sel?accent:'white'};color:${sel?'white':'#334155'};font-weight:600;font-size:13px;cursor:pointer;">${area}${sel?' ✓':''}</button>`;
+    return `<button onclick="toggleArea('${area}')" style="padding:7px 15px;border-radius:12px;border:2px solid ${sel?accent:'#e2e8f0'};background:${sel?accent:'white'};color:${sel?'white':'#334155'};font-weight:600;font-size:13px;cursor:pointer;">${areaName(area)}${sel?' ✓':''}</button>`;
   }).join('');
+  if (selectedAreas.length>=2 && document.getElementById('comparison-result').style.display==='block') runComparison();
 }
 
 function toggleArea(a) {
@@ -800,7 +808,7 @@ function runComparison() {
   const data = selectedAreas.map(a=>({area:a,...AREA_DATA[a]}));
   const r=isRental(), inv=mode==='investor';
 
-  document.getElementById('comparison-title').textContent = selectedAreas.join(' vs ');
+  document.getElementById('comparison-title').textContent = selectedAreas.map(areaName).join(' vs ');
   document.getElementById('comparison-result').style.display='block';
   document.getElementById('chart1-title').textContent = r?(lang==='he'?'שכ"ד ממוצע':'Average Rent'):inv?(lang==='he'?'מחיר ממוצע':'Average Price'):(lang==='he'?'מחיר ממוצע (נמוך יותר = טוב יותר)':'Average Price (lower = better 💑)');
   document.getElementById('chart2-title').textContent = r?(lang==='he'?'שכ"ד ממוצע לחדר':'Avg Rent / Room'):inv?(lang==='he'?'תשואת שכירות':'Rental Yield'):(lang==='he'?'ציון נגישות לזוגות':'Couple Affordability Score');
@@ -808,7 +816,7 @@ function runComparison() {
   document.getElementById('comparison-cards').style.gridTemplateColumns=`repeat(${data.length},1fr)`;
   document.getElementById('comparison-cards').innerHTML=data.map((d,i)=>`
     <div class="card" style="padding:16px;text-align:center;border-top:4px solid ${BAR_COLORS[i]};">
-      <h3 style="font-weight:800;color:${BAR_COLORS[i]};font-size:13px;">${d.area}</h3>
+      <h3 style="font-weight:800;color:${BAR_COLORS[i]};font-size:13px;">${areaName(d.area)}</h3>
       ${r
         ? `<p style="font-size:20px;font-weight:800;margin:7px 0;">₪${d.avgRent.toLocaleString()}<span style="font-size:11px;color:#64748b;">/mo</span></p>
            <p style="font-size:11px;color:#64748b;">${lang==='he'?'שכ"ד ממוצע':'Avg. Rent'}</p>
@@ -829,7 +837,7 @@ function runComparison() {
   document.getElementById('price-chart').innerHTML = data.map((d,i)=>{
     const h=Math.round((chartVals1[i]/max1)*140);
     const lbl = r ? `₪${(chartVals1[i]/1000).toFixed(0)}K` : `₪${(chartVals1[i]/1000000).toFixed(1)}M`;
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:10px;font-weight:700;color:#475569;">${lbl}</div><div class="bar" style="width:100%;height:${h}px;background:${BAR_COLORS[i]};"></div><div style="font-size:10px;font-weight:600;text-align:center;">${d.area.split(' ')[0]}</div></div>`;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:10px;font-weight:700;color:#475569;">${lbl}</div><div class="bar" style="width:100%;height:${h}px;background:${BAR_COLORS[i]};"></div><div style="font-size:10px;font-weight:600;text-align:center;">${areaName(d.area).split(' ')[0]}</div></div>`;
   }).join('');
 
   const chartVals2 = r
@@ -840,7 +848,7 @@ function runComparison() {
   document.getElementById('sqm-chart').innerHTML=data.map((d,i)=>{
     const h=Math.round((chartVals2[i]/max2)*140);
     const lbl=r?`₪${chartVals2[i].toLocaleString()}`:inv?`${(chartVals2[i]/10).toFixed(1)}%`:`${chartVals2[i]}/100`;
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:10px;font-weight:700;color:#475569;">${lbl}</div><div class="bar" style="width:100%;height:${h}px;background:${BAR_COLORS[i]};"></div><div style="font-size:10px;font-weight:600;text-align:center;">${d.area.split(' ')[0]}</div></div>`;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:10px;font-weight:700;color:#475569;">${lbl}</div><div class="bar" style="width:100%;height:${h}px;background:${BAR_COLORS[i]};"></div><div style="font-size:10px;font-weight:600;text-align:center;">${areaName(d.area).split(' ')[0]}</div></div>`;
   }).join('');
 }
 
