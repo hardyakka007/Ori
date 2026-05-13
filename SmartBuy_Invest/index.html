@@ -64,6 +64,7 @@
     <span class="nav-link" onclick="showPage('compare',this)" data-key="nav_compare">⚖️ Compare</span>
     <span class="nav-link" onclick="showPage('favorites',this)" data-key="nav_fav">❤️ Saved</span>
     <span class="nav-link" onclick="showPage('agents',this)" data-key="nav_agents">🤖 Agents</span>
+    <span class="nav-link" onclick="showPage('community',this)" data-key="nav_community" style="color:#7c3aed;">👥 Community ⭐</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
       <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">🇮🇱 עב</button>
       <span style="font-size:20px;cursor:pointer;position:relative;" onclick="showPage('notifications',null)">
@@ -243,26 +244,69 @@
     </div>
   </div>
   <h2 style="font-size:16px;font-weight:800;margin-bottom:14px;" data-key="plans_title">💎 Choose Your Plan</h2>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:640px;">
     <div class="card" style="padding:18px;border:2px solid #e2e8f0;">
       <p style="font-weight:700;" data-key="plan_free">Free</p>
       <p style="font-size:22px;font-weight:800;margin:6px 0;">$0</p>
-      <ul style="font-size:13px;color:#475569;line-height:2;"><li>✓ <span data-key="feat_search">Basic search</span></li><li>✓ <span data-key="feat_comp">1 comparison/day</span></li><li style="color:#cbd5e1;">✗ <span data-key="feat_alerts">Agent alerts</span></li></ul>
+      <ul style="font-size:13px;color:#475569;line-height:2;">
+        <li>✓ <span data-key="feat_search">Basic search</span></li>
+        <li>✓ <span data-key="feat_comp">1 comparison/day</span></li>
+        <li style="color:#cbd5e1;">✗ <span data-key="feat_alerts">Agent alerts</span></li>
+        <li style="color:#cbd5e1;">✗ <span>Community access</span></li>
+      </ul>
       <div style="background:#f1f5f9;text-align:center;padding:9px;border-radius:10px;font-weight:600;font-size:12px;margin-top:12px;color:#64748b;" data-key="current_plan">Current Plan</div>
     </div>
-    <div class="card" style="padding:18px;border:2px solid #2563eb;">
-      <p style="font-weight:700;" data-key="plan_prem">Premium ⭐</p>
+    <div class="card" style="padding:18px;border:2px solid #7c3aed;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;right:0;background:#7c3aed;color:white;font-size:10px;font-weight:700;padding:3px 10px;border-radius:0 0 0 10px;">BEST VALUE</div>
+      <p style="font-weight:700;color:#7c3aed;">Premium 💎</p>
       <p style="font-size:22px;font-weight:800;margin:6px 0;">$9.99<span style="font-size:11px;color:#64748b;">/mo</span></p>
-      <ul style="font-size:13px;color:#475569;line-height:2;"><li>✓ <span data-key="feat_unlim">Unlimited comparisons</span></li><li>✓ <span data-key="feat_agent_alerts">Agent alerts</span></li><li>✓ <span data-key="feat_email">Email digest</span></li></ul>
-      <button class="btn btn-p" style="width:100%;margin-top:12px;" onclick="showToast(T('upgrade_soon'))" data-key="upgrade_btn">Upgrade →</button>
-    </div>
-    <div class="card" style="padding:18px;border:2px solid #7c3aed;">
-      <p style="font-weight:700;" data-key="plan_inv">Investor 💎</p>
-      <p style="font-size:22px;font-weight:800;margin:6px 0;">$19.99<span style="font-size:11px;color:#64748b;">/mo</span></p>
-      <ul style="font-size:13px;color:#475569;line-height:2;"><li>✓ <span data-key="feat_roi">ROI calculator</span></li><li>✓ <span data-key="feat_trends">Market trends</span></li><li>✓ <span data-key="feat_priority">Priority support</span></li></ul>
-      <button class="btn" style="background:#7c3aed;color:white;width:100%;margin-top:12px;" onclick="showToast(T('upgrade_soon'))" data-key="upgrade_btn2">Upgrade →</button>
+      <ul style="font-size:13px;color:#475569;line-height:2;">
+        <li>✓ <span data-key="feat_unlim">Unlimited comparisons</span></li>
+        <li>✓ <span data-key="feat_agent_alerts">Agent alerts</span></li>
+        <li>✓ <span data-key="feat_email">Email digest</span></li>
+        <li>✓ <span data-key="feat_roi">ROI calculator</span></li>
+        <li>✓ <span data-key="feat_trends">Market trends</span></li>
+        <li>✓ <span style="color:#7c3aed;font-weight:700;">👥 Community access</span></li>
+      </ul>
+      <button class="btn" style="background:#7c3aed;color:white;width:100%;margin-top:12px;" onclick="unlockCommunity();showPage('community',null);" data-key="upgrade_btn">Upgrade →</button>
     </div>
   </div>
+</div>
+
+<!-- ====== COMMUNITY ====== -->
+<div id="page-community" class="page fade-in" style="padding-top:20px;">
+  <!-- Premium banner -->
+  <div style="background:linear-gradient(135deg,#6d28d9,#7c3aed);border-radius:14px;padding:14px 20px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">
+    <span style="font-size:28px;">💎</span>
+    <div style="flex:1;">
+      <p style="color:white;font-weight:800;font-size:14px;" id="comm-banner-title">Premium Feature — SmartBuy Community</p>
+      <p style="color:#e9d5ff;font-size:12px;margin-top:2px;" id="comm-banner-sub">Connect with buyers, renters & investors across Israel</p>
+    </div>
+    <button class="btn" style="background:white;color:#7c3aed;font-size:12px;font-weight:700;padding:7px 14px;" onclick="showPage('profile',null)" id="comm-upgrade-btn">Upgrade →</button>
+  </div>
+  <!-- Filter tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <button class="stab active" id="ctab-all"      onclick="setCommunityTab('all',this)"      data-key="ctab_all">🌐 All</button>
+    <button class="stab"        id="ctab-buyers"   onclick="setCommunityTab('buyers',this)"   data-key="ctab_buyers">🏡 Buyers</button>
+    <button class="stab"        id="ctab-renters"  onclick="setCommunityTab('renters',this)"  data-key="ctab_renters">🗝️ Renters</button>
+    <button class="stab"        id="ctab-investors"onclick="setCommunityTab('investors',this)" data-key="ctab_investors">📈 Investors</button>
+  </div>
+  <!-- New post box -->
+  <div class="card" style="padding:16px;margin-bottom:18px;">
+    <textarea id="post-input" rows="3"
+      style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:14px;resize:none;outline:none;font-family:inherit;"
+      data-key-placeholder="post_placeholder"></textarea>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="stab active" id="ptag-buyers"   onclick="setPostTag('buyers',this)"   data-key="ctab_buyers" style="font-size:12px;padding:5px 10px;">🏡 Buyers</button>
+        <button class="stab"        id="ptag-renters"  onclick="setPostTag('renters',this)"  data-key="ctab_renters" style="font-size:12px;padding:5px 10px;">🗝️ Renters</button>
+        <button class="stab"        id="ptag-investors"onclick="setPostTag('investors',this)" data-key="ctab_investors" style="font-size:12px;padding:5px 10px;">📈 Investors</button>
+      </div>
+      <button class="btn btn-p" onclick="submitPost()" id="post-btn" style="font-size:13px;padding:9px 20px;" data-key="post_btn">📤 Post</button>
+    </div>
+  </div>
+  <!-- Feed -->
+  <div id="community-feed"></div>
 </div>
 
 <!-- ====== NOTIFICATIONS ====== -->
@@ -310,6 +354,15 @@ const TRANSLATIONS = {
     listings_found:'listings found', rentals_found:'rentals found',
     est_deposit:'deposit', rent_per_mo:'/mo',
     est_mortgage:'Est. mortgage', per_month:'/mo',
+    nav_community:'👥 Community ⭐',
+    ctab_all:'🌐 All', ctab_buyers:'🏡 Buyers', ctab_renters:'🗝️ Renters', ctab_investors:'📈 Investors',
+    post_placeholder:'Share a tip, question or experience with the community...',
+    post_btn:'📤 Post',
+    comm_banner_title:'Premium Feature — SmartBuy Community',
+    comm_banner_sub:'Connect with buyers, renters & investors across Israel',
+    comm_upgrade_btn:'Upgrade →',
+    comm_likes:'Likes', comm_reply:'Reply', comm_just_now:'Just now',
+    comm_posted:'Posted!',
   },
   he: {
     nav_home:'🏠 בית', nav_search:'🔍 חיפוש', nav_deals:'🔥 עסקאות', nav_compare:'⚖️ השוואה',
@@ -340,6 +393,15 @@ const TRANSLATIONS = {
     listings_found:'נכסים נמצאו', rentals_found:'דירות להשכרה נמצאו',
     est_deposit:'פיקדון', rent_per_mo:'/חודש',
     est_mortgage:'משכנתה משוערת', per_month:'/חודש',
+    nav_community:'👥 קהילה ⭐',
+    ctab_all:'🌐 הכל', ctab_buyers:'🏡 רוכשים', ctab_renters:'🗝️ שוכרים', ctab_investors:'📈 משקיעים',
+    post_placeholder:'שתף טיפ, שאלה או חוויה עם הקהילה...',
+    post_btn:'📤 פרסם',
+    comm_banner_title:'תכונת פרימיום — קהילת SmartBuy',
+    comm_banner_sub:'התחבר עם רוכשים, שוכרים ומשקיעים בכל רחבי ישראל',
+    comm_upgrade_btn:'שדרג ←',
+    comm_likes:'לייקים', comm_reply:'השב', comm_just_now:'ממש עכשיו',
+    comm_posted:'פורסם!',
   }
 };
 
@@ -406,6 +468,44 @@ const INVEST_LISTINGS = [
   { id:13, title:'Jerusalem tourist rental goldmine', titleHe:'השכרת תיירים ירושלים',        area:'Jerusalem', neighborhood:'City Center',       price:1400000, sqm:95,  rooms:3, type:'Apartment', source:'madlan', score:80, vsMarket:-15, emoji:'🕌', saved:false, yieldPct:'9.1%' },
   { id:14, title:'Luxury penthouse, sea view',        titleHe:'פנטהאוז יוקרה, נוף לים',     area:'Netanya',   neighborhood:'Seafront',          price:2800000, sqm:200, rooms:6, type:'Penthouse', source:'yad2',   score:77, vsMarket:-12, emoji:'🌊', saved:false, yieldPct:'5.4%' },
   { id:15, title:'Haifa port area — rising market',   titleHe:'נמל חיפה — שוק עולה',        area:'Haifa',     neighborhood:'Port Area',         price:780000,  sqm:90,  rooms:3, type:'Apartment', source:'madlan', score:83, vsMarket:-20, emoji:'⛵', saved:false, yieldPct:'7.8%' },
+];
+
+// ═══════════════════════════════════════════════════
+//  COMMUNITY DATA
+// ═══════════════════════════════════════════════════
+let communityTab = 'all';
+let postTag = 'buyers';
+let isPremium = false; // toggled when user "upgrades" in demo
+
+const COMMUNITY_POSTS = [
+  { id:1, tag:'buyers',    avatar:'👩', name:'Noa K.',    badge:'💑 First-Time Buyer',  badgeHe:'💑 רוכשת ראשונה',
+    text:'Just closed on a 3-room in Ramat Gan for ₪850K — 22% below market! SmartBuy agents found it 🎉',
+    textHe:'סגרנו על דירת 3 חדרים ברמת גן ב-₪850K — 22% מתחת לממוצע! סוכני SmartBuy מצאו אותה 🎉',
+    time:'2 min ago', timeHe:'לפני 2 דקות', likes:14, liked:false, comments:3 },
+  { id:2, tag:'investors', avatar:'👨', name:'David M.',  badge:'📈 Investor',          badgeHe:'📈 משקיע',
+    text:'Anyone have experience with Jerusalem tourist rentals? Seeing 9%+ yield on short-term. Worth the hassle?',
+    textHe:'למישהו ניסיון עם השכרת תיירים בירושלים? רואה תשואה 9%+ לטווח קצר. שווה את הטרחה?',
+    time:'18 min ago', timeHe:'לפני 18 דקות', likes:9, liked:false, comments:7 },
+  { id:3, tag:'renters',   avatar:'🧑', name:'Tali R.',   badge:'🗝️ Renter',           badgeHe:'🗝️ שוכרת',
+    text:'Pro tip: always ask if water bills are included before signing. Saved me ₪400/mo in Haifa!',
+    textHe:'טיפ: תמיד תשאלו אם חשבון המים כלול לפני חתימה. חסכתי ₪400 לחודש בחיפה!',
+    time:'45 min ago', timeHe:'לפני 45 דקות', likes:22, liked:false, comments:5 },
+  { id:4, tag:'buyers',    avatar:'👫', name:'Avi & Sara', badge:'💑 First-Time Buyer', badgeHe:'💑 רוכשים ראשונים',
+    text:'We got mortgage pre-approval for ₪700K! Looking in Beer Sheva and Netanya. Any area recommendations?',
+    textHe:'קיבלנו אישור עקרוני למשכנתה של ₪700K! מחפשים בבאר שבע ונתניה. יש המלצות על אזורים?',
+    time:'1 hr ago', timeHe:'לפני שעה', likes:6, liked:false, comments:11 },
+  { id:5, tag:'investors', avatar:'👩‍💼', name:'Roni B.',  badge:'📈 Investor',         badgeHe:'📈 משקיעת',
+    text:'Haifa port area is seriously undervalued right now. Bought 3-room for ₪780K last month, already up ₪40K.',
+    textHe:'אזור נמל חיפה מוזל ברצינות כרגע. קניתי דירת 3 חדרים ב-₪780K חודש שעבר, כבר עלתה ₪40K.',
+    time:'2 hr ago', timeHe:'לפני 2 שעות', likes:31, liked:false, comments:8 },
+  { id:6, tag:'renters',   avatar:'🧔', name:'Yossi L.',  badge:'🗝️ Renter',           badgeHe:'🗝️ שוכר',
+    text:'Found a pet-friendly 2-room in Rishon for ₪4,200/mo with immediate entry. Grab it fast if you need it!',
+    textHe:'מצאתי דירת 2 חדרים ידידותית לחיות בראשון ב-₪4,200 לחודש עם כניסה מיידית. תקפצו מהר!',
+    time:'3 hr ago', timeHe:'לפני 3 שעות', likes:17, liked:false, comments:2 },
+  { id:7, tag:'buyers',    avatar:'👱', name:'Michal T.',  badge:'💑 First-Time Buyer', badgeHe:'💑 רוכשת ראשונה',
+    text:'Does anyone know if the government grant for young couples still applies in Tel Aviv? Max price seems too low 😅',
+    textHe:'מישהי יודעת אם מענק המדינה לזוגות צעירים עדיין תקף בתל אביב? מחיר המקסימום נראה נמוך מדי 😅',
+    time:'5 hr ago', timeHe:'לפני 5 שעות', likes:8, liked:false, comments:14 },
 ];
 
 const AREA_NAME_HE = {
@@ -678,6 +778,7 @@ function refreshCurrentPage() {
   if (currentPage==='favorites')     renderFavorites();
   if (currentPage==='agents')        renderAgents();
   if (currentPage==='notifications') renderNotifications();
+  if (currentPage==='community')    renderCommunity();
 }
 
 // ═══════════════════════════════════════════════════
@@ -953,6 +1054,121 @@ function showToast(msg) {
   t.className='toast'; t.textContent=msg;
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2600);
+}
+
+// ═══════════════════════════════════════════════════
+//  COMMUNITY
+// ═══════════════════════════════════════════════════
+function renderCommunity() {
+  // banner / upgrade button
+  document.getElementById('comm-banner-title').textContent  = T('comm_banner_title');
+  document.getElementById('comm-banner-sub').textContent    = T('comm_banner_sub');
+  document.getElementById('comm-upgrade-btn').textContent   = T('comm_upgrade_btn');
+  document.getElementById('post-btn').textContent           = T('post_btn');
+  document.getElementById('post-input').placeholder         = T('post_placeholder');
+
+  // paywall: blur feed if not premium
+  const feed = document.getElementById('community-feed');
+  if (!isPremium) {
+    feed.innerHTML = `
+      <div style="position:relative;">
+        <div style="filter:blur(4px);pointer-events:none;user-select:none;">
+          ${visiblePosts().slice(0,3).map(postCard).join('')}
+        </div>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.55);border-radius:14px;">
+          <p style="font-size:36px;">🔒</p>
+          <p style="font-weight:800;font-size:16px;margin-top:8px;">${lang==='he'?'תכונת פרימיום':'Premium Feature'}</p>
+          <p style="color:#64748b;font-size:13px;margin-top:4px;text-align:center;max-width:260px;">${lang==='he'?'שדרג לפרימיום כדי לקרוא ולפרסם בקהילה':'Upgrade to Premium to read & post in the community'}</p>
+          <button class="btn btn-p" style="margin-top:14px;background:#7c3aed;" onclick="unlockCommunity()">${lang==='he'?'🔓 שדרג לפרימיום — $9.99/חודש':'🔓 Upgrade to Premium — $9.99/mo'}</button>
+          <p style="font-size:11px;color:#94a3b8;margin-top:8px;cursor:pointer;" onclick="unlockCommunity()">${lang==='he'?'(לצורך ההדגמה: לחץ לפתיחה)':'(Demo: click to unlock)'}</p>
+        </div>
+      </div>`;
+    return;
+  }
+  feed.innerHTML = visiblePosts().map(postCard).join('') ||
+    `<div style="text-align:center;padding:50px;color:#94a3b8;"><p style="font-size:36px;">💬</p><p style="font-weight:700;margin-top:8px;">${lang==='he'?'אין פוסטים עדיין':'No posts yet'}</p></div>`;
+}
+
+function visiblePosts() {
+  return communityTab==='all' ? COMMUNITY_POSTS : COMMUNITY_POSTS.filter(p=>p.tag===communityTab);
+}
+
+function postCard(p) {
+  const txt   = lang==='he' && p.textHe ? p.textHe : p.text;
+  const badge = lang==='he' && p.badgeHe ? p.badgeHe : p.badge;
+  const time  = lang==='he' && p.timeHe  ? p.timeHe  : p.time;
+  const tagCol= p.tag==='investors'?'#1e40af':p.tag==='renters'?'#14532d':'#be185d';
+  const tagBg = p.tag==='investors'?'#dbeafe':p.tag==='renters'?'#dcfce7':'#fce7f3';
+  return `
+  <div class="card fade-in" style="padding:16px;margin-bottom:12px;">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${p.avatar}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-weight:800;font-size:14px;">${p.name}</span>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:${tagBg};color:${tagCol};">${badge}</span>
+          <span style="font-size:10px;color:#94a3b8;margin-left:auto;">${time}</span>
+        </div>
+        <p style="font-size:13px;color:#334155;margin-top:7px;line-height:1.5;">${txt}</p>
+        <div style="display:flex;gap:16px;margin-top:10px;align-items:center;">
+          <button onclick="likePost(${p.id},this)" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:${p.liked?'#dc2626':'#64748b'};">
+            ${p.liked?'❤️':'🤍'} <span id="likes-${p.id}">${p.likes}</span>
+          </button>
+          <span style="font-size:12px;color:#64748b;">💬 ${p.comments} ${T('comm_reply')}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function likePost(id, btn) {
+  const p = COMMUNITY_POSTS.find(x=>x.id===id);
+  if (!p) return;
+  p.liked = !p.liked;
+  p.likes += p.liked ? 1 : -1;
+  btn.style.color = p.liked ? '#dc2626' : '#64748b';
+  btn.innerHTML = `${p.liked?'❤️':'🤍'} <span id="likes-${p.id}">${p.likes}</span>`;
+}
+
+function setCommunityTab(tab, el) {
+  communityTab = tab;
+  document.querySelectorAll('#page-community .stab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderCommunity();
+}
+
+function setPostTag(tag, el) {
+  postTag = tag;
+  document.querySelectorAll('[id^="ptag-"]').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function submitPost() {
+  if (!isPremium) { unlockCommunity(); return; }
+  const input = document.getElementById('post-input');
+  const txt = input.value.trim();
+  if (!txt) return;
+  const isHe = lang === 'he';
+  COMMUNITY_POSTS.unshift({
+    id: Date.now(), tag: postTag,
+    avatar:'😊', name: isHe?'אתה':'You',
+    badge: postTag==='investors'?(isHe?'📈 משקיע':'📈 Investor'):postTag==='renters'?(isHe?'🗝️ שוכר':'🗝️ Renter'):(isHe?'💑 רוכש':'💑 Buyer'),
+    badgeHe: postTag==='investors'?'📈 משקיע':postTag==='renters'?'🗝️ שוכר':'💑 רוכש',
+    text: txt, textHe: txt,
+    time: T('comm_just_now'), timeHe: T('comm_just_now'),
+    likes:0, liked:false, comments:0
+  });
+  input.value = '';
+  communityTab = 'all';
+  document.querySelectorAll('#page-community .stab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  renderCommunity();
+  showToast(T('comm_posted'));
+}
+
+function unlockCommunity() {
+  isPremium = true;
+  showToast(lang==='he'?'🎉 ברוך הבא לפרימיום!':'🎉 Welcome to Premium!');
+  renderCommunity();
 }
 
 // ═══════════════════════════════════════════════════
