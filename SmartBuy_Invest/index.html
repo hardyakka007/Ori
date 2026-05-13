@@ -67,6 +67,7 @@
     <span class="nav-link" onclick="showPage('favorites',this)" data-key="nav_fav">❤️ Saved</span>
     <span class="nav-link" onclick="showPage('agents',this)" data-key="nav_agents">🤖 Agents</span>
     <span class="nav-link" onclick="showPage('community',this)" data-key="nav_community" style="color:#7c3aed;">👥 Community ⭐</span>
+    <span class="nav-link" onclick="goToSellers();this.classList.add('active')" data-key="nav_sellers" style="color:#92400e;font-weight:800;">🏷️ Sellers</span>
     <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
       <button class="lang-btn" id="lang-toggle" onclick="toggleLang()">🇮🇱 עב</button>
       <span style="font-size:20px;cursor:pointer;position:relative;" onclick="showPage('notifications',null)">
@@ -81,7 +82,6 @@
 <div class="mode-bar">
   <button class="mode-btn couple active" id="btn-couple" onclick="setMode('couple')" data-key="mode_couple">💑 Young Couples</button>
   <button class="mode-btn investor" id="btn-investor" onclick="setMode('investor')" data-key="mode_investor">📈 Investors — Best ROI</button>
-  <button class="mode-btn seller" id="btn-seller" onclick="goToSellers()" data-key="mode_seller">🏷️ Sellers</button>
 </div>
 
 <!-- COUPLE SUB-TAB BAR (only visible in couple mode) -->
@@ -332,7 +332,8 @@ const TRANSLATIONS = {
   en: {
     nav_home:'🏠 Home', nav_search:'🔍 Search', nav_deals:'🔥 Deals', nav_compare:'⚖️ Compare',
     nav_fav:'❤️ Saved', nav_agents:'🤖 Agents',
-    mode_couple:'💑 Young Couples', mode_investor:'📈 Investors — Best ROI', mode_seller:'🏷️ Sellers',
+    mode_couple:'💑 Young Couples', mode_investor:'📈 Investors — Best ROI',
+    nav_sellers:'🏷️ Sellers',
     sub_rent:'🏠 I Want to Rent', sub_buy:'🏡 I Want to Buy',
     ql_search:'Search', ql_deals:'Deals', ql_compare:'Compare Areas', ql_agents:'Agent Settings',
     see_all:'See all →',
@@ -394,7 +395,8 @@ const TRANSLATIONS = {
   he: {
     nav_home:'🏠 בית', nav_search:'🔍 חיפוש', nav_deals:'🔥 עסקאות', nav_compare:'⚖️ השוואה',
     nav_fav:'❤️ שמורים', nav_agents:'🤖 סוכנים',
-    mode_couple:'💑 זוגות צעירים', mode_investor:'📈 משקיעים — ROI מקסימלי', mode_seller:'🏷️ מוכרים',
+    mode_couple:'💑 זוגות צעירים', mode_investor:'📈 משקיעים — ROI מקסימלי',
+    nav_sellers:'🏷️ מוכרים',
     sub_rent:'🏠 אני רוצה לשכור', sub_buy:'🏡 אני רוצה לקנות',
     ql_search:'חיפוש', ql_deals:'עסקאות', ql_compare:'השוואת אזורים', ql_agents:'הגדרות סוכן',
     see_all:'הצג הכל ←',
@@ -732,7 +734,6 @@ function setMode(m) {
   mode = m;
   document.getElementById('btn-couple').classList.toggle('active',   m==='couple');
   document.getElementById('btn-investor').classList.toggle('active', m==='investor');
-  document.getElementById('btn-seller').classList.remove('active');
   const subBar = document.getElementById('sub-bar');
   subBar.classList.toggle('visible', m==='couple');
   document.getElementById('main-wrap').style.paddingTop = m==='couple' ? '148px' : '112px';
