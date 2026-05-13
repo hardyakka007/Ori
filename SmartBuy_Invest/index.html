@@ -290,9 +290,10 @@
     <button class="stab"        id="ctab-buyers"   onclick="setCommunityTab('buyers',this)"   data-key="ctab_buyers">🏡 Buyers</button>
     <button class="stab"        id="ctab-renters"  onclick="setCommunityTab('renters',this)"  data-key="ctab_renters">🗝️ Renters</button>
     <button class="stab"        id="ctab-investors"onclick="setCommunityTab('investors',this)" data-key="ctab_investors">📈 Investors</button>
+    <button class="stab"        id="ctab-sellers"  onclick="setCommunityTab('sellers',this)"  data-key="ctab_sellers">🏷️ Sellers</button>
   </div>
-  <!-- New post box -->
-  <div class="card" style="padding:16px;margin-bottom:18px;">
+  <!-- New post box (hidden in sellers tab) -->
+  <div id="post-box" class="card" style="padding:16px;margin-bottom:18px;">
     <textarea id="post-input" rows="3"
       style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;font-size:14px;resize:none;outline:none;font-family:inherit;"
       data-key-placeholder="post_placeholder"></textarea>
@@ -363,6 +364,29 @@ const TRANSLATIONS = {
     comm_upgrade_btn:'Upgrade →',
     comm_likes:'Likes', comm_reply:'Reply', comm_just_now:'Just now',
     comm_posted:'Posted!',
+    ctab_sellers:'🏷️ Sellers',
+    seller_list_title:'List Your Property', seller_fee_desc:'Advertise your home for rent or sale. One-time fee of just',
+    seller_one_time:'One-time payment — list with no time limit',
+    seller_visible:'Visible to all community members', seller_badge:'Verified seller badge',
+    seller_inquiries:'Receive direct inquiries', seller_no_fee:'No agency commission',
+    seller_pay_btn:'Pay ₪30 and List Now', seller_demo:'(Demo: click to unlock without payment)',
+    seller_recent:'Recently listed by sellers',
+    seller_form_title:'List a New Property', seller_paid_badge:'Paid',
+    ltype_sale:'🏷️ For Sale', ltype_rent:'🗝️ For Rent',
+    sf_proptype:'PROPERTY TYPE', sf_city:'CITY', sf_neighborhood:'NEIGHBORHOOD',
+    sf_phone:'PHONE / WHATSAPP', sf_price_sale:'PRICE ₪', sf_price_rent:'PRICE ₪/mo',
+    sf_rooms:'ROOMS', sf_sqm:'SIZE (sqm)', sf_pets:'PETS', sf_furnished:'FURNISHED',
+    sf_entry:'ENTRY DATE', sf_desc:'DESCRIPTION',
+    sf_pets_yes:'🐾 Allowed', sf_pets_no:'🚫 Not allowed',
+    sf_furn_yes:'🛋️ Furnished', sf_furn_no:'📦 Unfurnished',
+    sf_entry_imm:'⚡ Immediate', sf_entry_month:'📅 Within 1 month',
+    sf_submit:'📤 Publish Listing', sf_neighborhood_ph:'e.g. Florentin',
+    sf_sqm_ph:'sqm', sf_desc_ph:'Describe your property...',
+    seller_members:'Listings posted by community members',
+    verified_seller:'Verified Seller', for_sale:'🏷️ For Sale', for_rent:'🗝️ For Rent',
+    whatsapp_open:'Opening WhatsApp',
+    sf_err:'Please fill in price and contact', seller_success:'Listing published!',
+    pay_received:'Payment received! List your property',
   },
   he: {
     nav_home:'🏠 בית', nav_search:'🔍 חיפוש', nav_deals:'🔥 עסקאות', nav_compare:'⚖️ השוואה',
@@ -402,6 +426,29 @@ const TRANSLATIONS = {
     comm_upgrade_btn:'שדרג ←',
     comm_likes:'לייקים', comm_reply:'השב', comm_just_now:'ממש עכשיו',
     comm_posted:'פורסם!',
+    ctab_sellers:'🏷️ מוכרים',
+    seller_list_title:'פרסם את הנכס שלך', seller_fee_desc:'פרסם דירה לשכירה או מכירה. תשלום חד פעמי של',
+    seller_one_time:'תשלום חד פעמי — פרסם ללא הגבלת זמן',
+    seller_visible:'גלוי לכל חברי הקהילה', seller_badge:'תגית מוכר מאומת',
+    seller_inquiries:'קבל פניות ישירות', seller_no_fee:'ללא עמלת תיווך',
+    seller_pay_btn:'שלם ₪30 ופרסם עכשיו', seller_demo:'(הדגמה: לחץ לפתיחה ללא תשלום)',
+    seller_recent:'נכסים שפורסמו לאחרונה',
+    seller_form_title:'פרסם נכס חדש', seller_paid_badge:'שולם',
+    ltype_sale:'🏷️ למכירה', ltype_rent:'🗝️ להשכרה',
+    sf_proptype:'סוג נכס', sf_city:'עיר', sf_neighborhood:'שכונה',
+    sf_phone:'טלפון / ווצאפ', sf_price_sale:'מחיר ₪', sf_price_rent:'מחיר ₪/חודש',
+    sf_rooms:'חדרים', sf_sqm:'גודל מ"ר', sf_pets:'חיות מחמד', sf_furnished:'ריהוט',
+    sf_entry:'תאריך כניסה', sf_desc:'תיאור הנכס',
+    sf_pets_yes:'🐾 מותר', sf_pets_no:'🚫 לא מותר',
+    sf_furn_yes:'🛋️ מרוהט', sf_furn_no:'📦 לא מרוהט',
+    sf_entry_imm:'⚡ מיידי', sf_entry_month:'📅 תוך חודש',
+    sf_submit:'📤 פרסם נכס', sf_neighborhood_ph:'לדוגמה: פלורנטין',
+    sf_sqm_ph:'מ"ר', sf_desc_ph:'תאר את הנכס שלך...',
+    seller_members:'נכסים שפורסמו על ידי חברי הקהילה',
+    verified_seller:'מוכר מאומת', for_sale:'🏷️ למכירה', for_rent:'🗝️ להשכרה',
+    whatsapp_open:'פותח ווצאפ',
+    sf_err:'נא למלא מחיר ופרטי קשר', seller_success:'הנכס פורסם בהצלחה!',
+    pay_received:'התשלום התקבל! פרסם את הנכס שלך',
   }
 };
 
@@ -475,7 +522,36 @@ const INVEST_LISTINGS = [
 // ═══════════════════════════════════════════════════
 let communityTab = 'all';
 let postTag = 'buyers';
-let isPremium = false; // toggled when user "upgrades" in demo
+let isPremium = false;
+let isSellerPaid = false;
+let sellerListingType = 'sale';
+
+const SELLER_POSTS = [
+  { id:201, listingType:'sale', propType:'Apartment', avatar:'👨', name:'Ron A.',
+    area:'Tel Aviv', neighborhood:'Florentin', price:890000, rooms:3, sqm:85,
+    pets:false, furnished:false, entry:'immediate', contact:'050-1234567',
+    desc:'Beautiful 3-room apartment, fully renovated, close to parks and light rail.',
+    descHe:'דירת 3 חדרים יפהפייה, משופצת לחלוטין, קרוב לפארקים ולרכבת קלה.',
+    time:'1 hr ago', timeHe:'לפני שעה' },
+  { id:202, listingType:'rent', propType:'Apartment', avatar:'👩', name:'Tamar L.',
+    area:'Haifa', neighborhood:'Carmel', price:4500, rooms:2, sqm:65,
+    pets:true, furnished:true, entry:'immediate', contact:'052-9876543',
+    desc:'Furnished 2-room with stunning sea view. Pets are very welcome!',
+    descHe:'דירת 2 חדרים מרוהטת עם נוף לים מרהיב. חיות מחמד מתקבלות בברכה!',
+    time:'3 hr ago', timeHe:'לפני 3 שעות' },
+  { id:203, listingType:'sale', propType:'House', avatar:'👴', name:'Moshe K.',
+    area:'Beer Sheva', neighborhood:'Old City', price:520000, rooms:4, sqm:120,
+    pets:false, furnished:false, entry:'month', contact:'054-5554444',
+    desc:'Spacious 4-room house with a large yard on a quiet street. Great value.',
+    descHe:'בית 4 חדרים מרווח עם חצר גדולה ברחוב שקט. ערך מעולה.',
+    time:'5 hr ago', timeHe:'לפני 5 שעות' },
+  { id:204, listingType:'rent', propType:'Studio', avatar:'👱', name:'Lihi S.',
+    area:'Tel Aviv', neighborhood:'Dizengoff', price:5200, rooms:1, sqm:38,
+    pets:false, furnished:true, entry:'immediate', contact:'053-7778888',
+    desc:'Cozy furnished studio in the heart of the city. All bills included.',
+    descHe:'סטודיו מרוהט וחמים במרכז העיר. כל החשבונות כלולים.',
+    time:'8 hr ago', timeHe:'לפני 8 שעות' },
+];
 
 const COMMUNITY_POSTS = [
   { id:1, tag:'buyers',    avatar:'👩', name:'Noa K.',    badge:'💑 First-Time Buyer',  badgeHe:'💑 רוכשת ראשונה',
@@ -1060,15 +1136,19 @@ function showToast(msg) {
 //  COMMUNITY
 // ═══════════════════════════════════════════════════
 function renderCommunity() {
-  // banner / upgrade button
-  document.getElementById('comm-banner-title').textContent  = T('comm_banner_title');
-  document.getElementById('comm-banner-sub').textContent    = T('comm_banner_sub');
-  document.getElementById('comm-upgrade-btn').textContent   = T('comm_upgrade_btn');
-  document.getElementById('post-btn').textContent           = T('post_btn');
-  document.getElementById('post-input').placeholder         = T('post_placeholder');
+  document.getElementById('comm-banner-title').textContent = T('comm_banner_title');
+  document.getElementById('comm-banner-sub').textContent   = T('comm_banner_sub');
+  document.getElementById('comm-upgrade-btn').textContent  = T('comm_upgrade_btn');
+  document.getElementById('post-btn').textContent          = T('post_btn');
+  document.getElementById('post-input').placeholder        = T('post_placeholder');
 
-  // paywall: blur feed if not premium
+  // hide post box when in sellers tab (sellers have their own form)
+  document.getElementById('post-box').style.display = communityTab === 'sellers' ? 'none' : '';
+
   const feed = document.getElementById('community-feed');
+
+  if (communityTab === 'sellers') { renderSellersTab(feed); return; }
+
   if (!isPremium) {
     feed.innerHTML = `
       <div style="position:relative;">
@@ -1168,6 +1248,194 @@ function submitPost() {
 function unlockCommunity() {
   isPremium = true;
   showToast(lang==='he'?'🎉 ברוך הבא לפרימיום!':'🎉 Welcome to Premium!');
+  renderCommunity();
+}
+
+// ═══════════════════════════════════════════════════
+//  SELLERS TAB
+// ═══════════════════════════════════════════════════
+function renderSellersTab(container) {
+  const areaOptions = Object.keys(AREA_DATA).map(a=>`<option value="${a}">${areaName(a)}</option>`).join('');
+  if (!isSellerPaid) {
+    container.innerHTML = `
+      <div class="card" style="padding:28px;text-align:center;max-width:480px;margin:0 auto 24px;">
+        <p style="font-size:40px;">🏷️</p>
+        <h2 style="font-size:18px;font-weight:800;margin-top:12px;">${T('seller_list_title')}</h2>
+        <p style="color:#64748b;font-size:13px;margin-top:8px;line-height:1.6;">${T('seller_fee_desc')} ₪30.</p>
+        <div style="background:#f8fafc;border-radius:12px;padding:16px;margin:16px 0;">
+          <p style="font-size:36px;font-weight:800;color:#2563eb;">₪30</p>
+          <p style="font-size:12px;color:#64748b;">${T('seller_one_time')}</p>
+        </div>
+        <ul style="text-align:${lang==='he'?'right':'left'};font-size:13px;color:#475569;line-height:2.2;margin-bottom:18px;padding:0 8px;">
+          <li>✓ ${T('seller_visible')}</li><li>✓ ${T('seller_badge')}</li>
+          <li>✓ ${T('seller_inquiries')}</li><li>✓ ${T('seller_no_fee')}</li>
+        </ul>
+        <button class="btn btn-p" style="width:100%;font-size:15px;padding:13px;" onclick="paySeller()">${T('seller_pay_btn')}</button>
+        <p style="font-size:11px;color:#94a3b8;margin-top:10px;cursor:pointer;" onclick="paySeller()">${T('seller_demo')}</p>
+      </div>
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">${T('seller_recent')}</h3>
+      ${SELLER_POSTS.map(sellerCard).join('')}`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="card" style="padding:20px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <h3 style="font-size:15px;font-weight:800;">🏷️ ${T('seller_form_title')}</h3>
+        <span style="font-size:11px;font-weight:700;background:#dcfce7;color:#14532d;padding:2px 10px;border-radius:999px;">✓ ${T('seller_paid_badge')}</span>
+      </div>
+      <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:7px;">${lang==='he'?'סוג מודעה':'LISTING TYPE'}</label>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button id="ltype-sale" class="stab ${sellerListingType==='sale'?'active':''}" onclick="setListingType('sale',this)" style="flex:1;">${T('ltype_sale')}</button>
+        <button id="ltype-rent" class="stab ${sellerListingType==='rent'?'active':''}" onclick="setListingType('rent',this)" style="flex:1;">${T('ltype_rent')}</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_proptype')}</label>
+          <select id="sf-proptype" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+            <option value="Apartment">${lang==='he'?'דירה':'Apartment'}</option>
+            <option value="House">${lang==='he'?'בית':'House'}</option>
+            <option value="Studio">${lang==='he'?'סטודיו':'Studio'}</option>
+            <option value="Penthouse">${lang==='he'?'פנטהאוז':'Penthouse'}</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_city')}</label>
+          <select id="sf-area" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">${areaOptions}</select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_neighborhood')}</label>
+          <input id="sf-neighborhood" type="text" placeholder="${T('sf_neighborhood_ph')}" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_phone')}</label>
+          <input id="sf-contact" type="tel" placeholder="050-0000000" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div>
+          <label id="sf-price-label" style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${sellerListingType==='rent'?T('sf_price_rent'):T('sf_price_sale')}</label>
+          <input id="sf-price" type="number" placeholder="₪" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_rooms')}</label>
+          <select id="sf-rooms" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+            <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5+</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_sqm')}</label>
+          <input id="sf-sqm" type="number" placeholder="${T('sf_sqm_ph')}" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_pets')}</label>
+          <select id="sf-pets" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+            <option value="yes">${T('sf_pets_yes')}</option><option value="no">${T('sf_pets_no')}</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_furnished')}</label>
+          <select id="sf-furnished" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+            <option value="no">${T('sf_furn_no')}</option><option value="yes">${T('sf_furn_yes')}</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_entry')}</label>
+          <select id="sf-entry" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;">
+            <option value="immediate">${T('sf_entry_imm')}</option><option value="month">${T('sf_entry_month')}</option>
+          </select>
+        </div>
+      </div>
+      <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_desc')}</label>
+      <textarea id="sf-desc" rows="3" placeholder="${T('sf_desc_ph')}"
+        style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;resize:none;outline:none;font-family:inherit;margin-bottom:14px;"></textarea>
+      <button class="btn btn-p" style="width:100%;font-size:14px;padding:12px;" onclick="submitSellerListing()">${T('sf_submit')}</button>
+    </div>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">${T('seller_members')}</h3>
+    ${SELLER_POSTS.map(sellerCard).join('')}`;
+}
+
+function sellerCard(p) {
+  const desc    = lang==='he' && p.descHe ? p.descHe : p.desc;
+  const time    = lang==='he' && p.timeHe ? p.timeHe : p.time;
+  const isSale  = p.listingType === 'sale';
+  const priceStr= isSale ? `₪${p.price.toLocaleString()}` : `₪${p.price.toLocaleString()}${lang==='he'?'/חודש':'/mo'}`;
+  const col     = isSale ? '#2563eb' : '#16a34a';
+  const typeBadge = isSale
+    ? `<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">${T('for_sale')}</span>`
+    : `<span style="background:#dcfce7;color:#14532d;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">${T('for_rent')}</span>`;
+  const petsBadge = p.pets
+    ? `<span style="background:#fef9c3;color:#854d0e;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">🐾 ${lang==='he'?'חיות OK':'Pets OK'}</span>`
+    : `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">🚫 ${lang==='he'?'ללא חיות':'No Pets'}</span>`;
+  const furnBadge = p.furnished
+    ? `<span style="background:#f0fdf4;color:#15803d;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">${lang==='he'?'🛋️ מרוהט':'🛋️ Furnished'}</span>` : '';
+  const entryBadge = p.entry === 'immediate'
+    ? `<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">${lang==='he'?'⚡ כניסה מיידית':'⚡ Immediate'}</span>`
+    : `<span style="background:#fce7f3;color:#9d174d;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">${lang==='he'?'📅 תוך חודש':'📅 1 month'}</span>`;
+  const areaDisp = lang==='he' ? (AREA_NAME_HE[p.area]||p.area) : p.area;
+  return `
+  <div class="card fade-in" style="padding:16px;margin-bottom:12px;border-right:4px solid ${col};">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${p.avatar}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-weight:800;font-size:13px;">${p.name}</span>
+          <span style="background:#dcfce7;color:#14532d;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;">✓ ${T('verified_seller')}</span>
+          <span style="font-size:10px;color:#94a3b8;margin-left:auto;">${time}</span>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;">${typeBadge}${petsBadge}${furnBadge}${entryBadge}</div>
+        <p style="font-size:22px;font-weight:800;color:${col};">${priceStr}</p>
+        <p style="font-size:12px;color:#334155;margin-top:3px;">📍 ${p.neighborhood?p.neighborhood+', ':''}${areaDisp} · 🛏 ${p.rooms} · 📐 ${p.sqm}${lang==='he'?' מ"ר':' sqm'}</p>
+        <p style="font-size:13px;color:#475569;margin-top:6px;line-height:1.5;">${desc}</p>
+        <button class="btn" style="margin-top:10px;font-size:12px;padding:7px 16px;background:#25d366;color:white;font-weight:700;" onclick="contactSeller('${p.contact}')">
+          💬 WhatsApp ${p.contact}
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function contactSeller(phone) { showToast(T('whatsapp_open') + ': ' + phone); }
+
+function paySeller() {
+  isSellerPaid = true;
+  showToast(T('pay_received'));
+  renderCommunity();
+}
+
+function setListingType(type, el) {
+  sellerListingType = type;
+  document.querySelectorAll('[id^="ltype-"]').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const lbl = document.getElementById('sf-price-label');
+  if (lbl) lbl.textContent = type==='rent' ? T('sf_price_rent') : T('sf_price_sale');
+}
+
+function submitSellerListing() {
+  const price   = parseInt(document.getElementById('sf-price').value)||0;
+  const sqm     = parseInt(document.getElementById('sf-sqm').value)||60;
+  const neigh   = document.getElementById('sf-neighborhood').value.trim();
+  const contact = document.getElementById('sf-contact').value.trim();
+  const desc    = document.getElementById('sf-desc').value.trim();
+  const area    = document.getElementById('sf-area').value;
+  const rooms   = parseInt(document.getElementById('sf-rooms').value)||2;
+  const pets    = document.getElementById('sf-pets').value === 'yes';
+  const furn    = document.getElementById('sf-furnished').value === 'yes';
+  const entry   = document.getElementById('sf-entry').value;
+  const propType= document.getElementById('sf-proptype').value;
+  if (!price || !contact) { showToast(T('sf_err')); return; }
+  SELLER_POSTS.unshift({
+    id: Date.now(), listingType: sellerListingType, propType,
+    avatar:'😊', name: lang==='he'?'אתה':'You',
+    area, neighborhood: neigh, price, rooms, sqm,
+    pets, furnished: furn, entry, contact,
+    desc: desc||propType, descHe: desc||propType,
+    time: T('comm_just_now'), timeHe: T('comm_just_now')
+  });
+  showToast(T('seller_success'));
   renderCommunity();
 }
 
