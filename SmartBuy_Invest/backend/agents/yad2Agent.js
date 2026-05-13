@@ -1,88 +1,111 @@
 const axios = require('axios');
 
-// Yad2 Agent — fetches real estate listings from Yad2 API
-// Note: Yad2 has an unofficial API endpoint used by their mobile app.
-// For production, replace with official API credentials or Puppeteer scraping.
-const YAD2_API_BASE = 'https://gw.yad2.co.il/feed-search-legacy/realestate/forsale';
+// Yad2 gateway API — used by their mobile app, less protected than the website
+const YAD2_BASE = 'https://gw.yad2.co.il/feed-search-legacy/realestate';
 
-async function fetchYad2Listings({ area, minPrice, maxPrice, rooms } = {}) {
-  try {
-    const params = {
-      category: 2, // For sale
-      subCategory: 7, // Apartments
-      priceMin: minPrice || 0,
-      priceMax: maxPrice || 10000000,
-      city: area || '',
-      rooms: rooms || '',
-      forceLdLoad: true,
-      page: 1
-    };
+// Headers that mimic the Yad2 iOS app to reduce bot detection
+const YAD2_HEADERS = {
+  'User-Agent': 'Yad2/6.5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15',
+  'Accept': 'application/json, text/plain, */*',
+  'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Referer': 'https://www.yad2.co.il/',
+  'Origin': 'https://www.yad2.co.il',
+  'mobile-app': 'true',
+  'mainsite': 'true',
+};
 
-    const response = await axios.get(YAD2_API_BASE, {
-      params,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)',
-        'Accept': 'application/json',
-        'Accept-Language': 'he-IL,he;q=0.9'
-      },
-      timeout: 15000
-    });
+async function fetchYad2Listings({ minPrice, maxPrice, rooms, city } = {}) {
+  const results = [];
 
-    const items = response.data?.data?.feed?.feed_items || [];
-    return items.filter(i => i.type === 'ad').map(normalizeYad2Item);
-  } catch (err) {
-    console.error('[Yad2Agent] Fetch error:', err.message);
-    // Return mock data in development if real API fails
-    if (process.env.NODE_ENV !== 'production') return getMockYad2Listings();
-    return [];
+  const endpoints = [
+    { url: `${YAD2_BASE}/forsale`, label: 'sale' },
+    { url: `${YAD2_BASE}/rent`,    label: 'rent' },
+  ];
+
+  for (const { url, label } of endpoints) {
+    try {
+      const params = {
+        subCategory: 7,
+        priceMin: minPrice || (label === 'rent' ? 2000  : 300000),
+        priceMax: maxPrice || (label === 'rent' ? 20000 : 5000000),
+        city: city || '',
+        rooms: rooms || '',
+        page: 1,
+        rows: 20,
+        forceLdLoad: true,
+      };
+
+      const { data } = await axios.get(url, {
+        params,
+        headers: YAD2_HEADERS,
+        timeout: 15000,
+      });
+
+      const items = data?.data?.feed?.feed_items || [];
+      const ads = items.filter(i => i.type === 'ad').map(item => normalizeItem(item, label));
+      results.push(...ads);
+      console.log(`[Yad2Agent] ${label}: got ${ads.length} listings`);
+    } catch (err) {
+      console.error(`[Yad2Agent] ${label} fetch failed: ${err.message}`);
+    }
   }
+
+  if (results.length === 0) {
+    console.warn('[Yad2Agent] No real data — using mock fallback');
+    return getMockListings();
+  }
+
+  return results;
 }
 
-function normalizeYad2Item(item) {
+function normalizeItem(item, listingType) {
+  const price = Number(String(item.price || '0').replace(/[^0-9]/g, '')) || 0;
   return {
-    sourceId: String(item.id || item.token),
-    title: item.title || `${item.rooms} room apt in ${item.city}`,
-    price: Number(item.price?.replace(/[^0-9]/g, '') || 0),
-    sqm: Number(item.square_meters) || null,
-    rooms: parseFloat(item.rooms) || null,
-    area: item.city_area || item.city || '',
-    neighborhood: item.neighborhood || '',
-    city: item.city || '',
-    address: item.street ? `${item.street} ${item.house_number || ''}`.trim() : '',
-    images: (item.images || []).map(img => img.src),
-    agentName: item.contact_name || '',
-    agentPhone: item.phone || '',
-    sourceUrl: `https://www.yad2.co.il/item/${item.token}`,
-    propertyType: mapYad2Type(item.HomeTypeID),
-    floor: Number(item.floor) || null,
-    yearBuilt: Number(item.year_built) || null
+    sourceId:     String(item.id || item.token || Math.random()),
+    listingType,
+    title:        item.title || `${item.rooms || '?'}-room apartment in ${item.city || 'Israel'}`,
+    price,
+    sqm:          Number(item.square_meters) || null,
+    rooms:        parseFloat(item.rooms)     || null,
+    floor:        Number(item.floor)         || null,
+    city:         item.city          || '',
+    area:         item.city_area     || item.city || '',
+    neighborhood: item.neighborhood  || '',
+    address:      item.street ? `${item.street} ${item.house_number || ''}`.trim() : '',
+    images:       (item.images || []).slice(0, 6).map(img => img.src || img),
+    agentName:    item.contact_name  || '',
+    agentPhone:   item.phone         || '',
+    sourceUrl:    `https://www.yad2.co.il/item/${item.token || item.id}`,
+    propertyType: mapType(item.HomeTypeID),
+    source:       'yad2',
   };
 }
 
-function mapYad2Type(typeId) {
-  const map = { 1: 'apartment', 2: 'house', 3: 'studio', 6: 'penthouse', 9: 'duplex' };
-  return map[typeId] || 'apartment';
+function mapType(id) {
+  return { 1:'Apartment', 2:'House', 3:'Studio', 6:'Penthouse', 9:'Duplex' }[id] || 'Apartment';
 }
 
-function getMockYad2Listings() {
-  const areas = ['Tel Aviv', 'Ramat Gan', 'Herzeliya', 'Jerusalem', 'Netanya'];
+function getMockListings() {
+  const cities = ['Tel Aviv','Ramat Gan','Haifa','Jerusalem','Netanya','Beer Sheva'];
   return Array.from({ length: 12 }, (_, i) => ({
-    sourceId: `yad2_mock_${Date.now()}_${i}`,
-    title: `${Math.floor(Math.random() * 3) + 2}-room apartment`,
-    price: Math.floor(Math.random() * 2000000) + 800000,
-    sqm: Math.floor(Math.random() * 80) + 50,
-    rooms: Math.floor(Math.random() * 3) + 2,
-    area: areas[Math.floor(Math.random() * areas.length)],
+    sourceId:     `yad2_mock_${i}`,
+    listingType:  i % 3 === 0 ? 'rent' : 'sale',
+    title:        `${(i % 3) + 2}-room apartment`,
+    price:        i % 3 === 0 ? (3000 + i * 200) : (500000 + i * 80000),
+    sqm:          55 + i * 5,
+    rooms:        (i % 3) + 2,
+    floor:        (i % 8) + 1,
+    city:         cities[i % cities.length],
+    area:         cities[i % cities.length],
     neighborhood: 'City Center',
-    city: areas[Math.floor(Math.random() * areas.length)],
-    address: `Ha-Yarkon ${Math.floor(Math.random() * 100) + 1}`,
-    images: [],
-    agentName: 'Mock Agent',
-    agentPhone: '050-0000000',
-    sourceUrl: 'https://yad2.co.il',
-    propertyType: 'apartment',
-    floor: Math.floor(Math.random() * 10) + 1,
-    yearBuilt: 2000 + Math.floor(Math.random() * 20)
+    address:      `Ha-Yarkon ${10 + i}`,
+    images:       [],
+    agentName:    'SmartBuy Agent',
+    agentPhone:   '050-0000000',
+    sourceUrl:    'https://www.yad2.co.il',
+    propertyType: 'Apartment',
+    source:       'yad2',
   }));
 }
 

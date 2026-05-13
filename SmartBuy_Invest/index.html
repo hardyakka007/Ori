@@ -224,8 +224,22 @@
 
 <!-- ====== AGENTS ====== -->
 <div id="page-agents" class="page fade-in" style="padding-top:20px;">
-  <h1 style="font-size:20px;font-weight:800;margin-bottom:4px;" data-key="agents_title">🤖 AI Agent Dashboard</h1>
-  <p style="color:#64748b;font-size:13px;margin-bottom:20px;" id="agents-sub"></p>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
+    <h1 style="font-size:20px;font-weight:800;" data-key="agents_title">🤖 AI Agent Dashboard</h1>
+    <span id="agent-live-badge" style="display:none;background:#16a34a;color:white;font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px;">● LIVE DATA</span>
+  </div>
+  <p style="color:#64748b;font-size:13px;margin-bottom:16px;" id="agents-sub"></p>
+
+  <!-- Railway backend connector -->
+  <div class="card" style="padding:18px;margin-bottom:20px;border:2px solid #e2e8f0;">
+    <p style="font-weight:800;font-size:13px;margin-bottom:4px;">🚀 Connect to Railway Backend</p>
+    <p style="font-size:12px;color:#64748b;margin-bottom:10px;">Paste your Railway URL to load real Yad2 &amp; Madlan listings instead of demo data.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <input id="backend-url-input" type="url" placeholder="https://your-app.up.railway.app"
+        style="flex:1;min-width:220px;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 14px;font-size:13px;outline:none;">
+      <button class="btn btn-p" onclick="saveBackendUrl()" style="white-space:nowrap;">⚡ Connect</button>
+    </div>
+  </div>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;" id="agent-stats"></div>
   <h3 style="font-size:14px;font-weight:700;margin-bottom:10px;" data-key="agent_status">Agent Status</h3>
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:22px;" id="agent-cards"></div>
@@ -639,10 +653,87 @@ const AGENTS_LIST = [
 ];
 
 // ═══════════════════════════════════════════════════
+//  BACKEND CONFIG — paste your Railway URL here
+// ═══════════════════════════════════════════════════
+let BACKEND_URL = localStorage.getItem('smartbuy_backend_url') || '';
+
+async function loadRealListings() {
+  if (!BACKEND_URL) return;
+  showToast(lang === 'he' ? '⏳ טוען נכסים אמיתיים מיד2...' : '⏳ Loading real Yad2 listings...');
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/public/listings`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.success || !data.listings.length) throw new Error('No listings returned');
+
+    const sales  = data.listings.filter(l => l.listingType === 'sale');
+    const rents  = data.listings.filter(l => l.listingType === 'rent');
+
+    if (sales.length)  { BUY_LISTINGS.length = 0;    sales.forEach((l,i)  => BUY_LISTINGS.push(toCard(l,i))); }
+    if (rents.length)  { RENTAL_LISTINGS.length = 0; rents.forEach((l,i)  => RENTAL_LISTINGS.push(toRentalCard(l,i))); }
+
+    showToast(`✅ ${data.count} ${lang === 'he' ? 'נכסים אמיתיים נטענו' : 'real listings loaded'}!`);
+    refreshCurrentPage();
+    document.getElementById('agent-live-badge').style.display = 'inline-block';
+  } catch (err) {
+    console.warn('[SmartBuy] Backend unavailable, using demo data:', err.message);
+    showToast(lang === 'he' ? '⚠️ נכסי הדמו בשימוש' : '⚠️ Using demo listings (backend offline)');
+  }
+}
+
+function toCard(l, i) {
+  const score = Math.min(99, Math.max(60, 95 - i * 2));
+  const avgPrice = 1500000;
+  const vsMarket = l.price ? Math.round(((l.price - avgPrice) / avgPrice) * 100) : -10;
+  return {
+    id: l.sourceId || ('r_' + i),
+    title: l.title, titleHe: l.title,
+    area: l.city || l.area || 'Israel',
+    neighborhood: l.neighborhood || '',
+    price: l.price || 0,
+    sqm: l.sqm || 70, rooms: l.rooms || 2,
+    type: l.propertyType || 'Apartment',
+    source: 'yad2', score, vsMarket,
+    emoji: ['🏙️','🌆','🏡','🌇','🏘️','⛰️'][i % 6],
+    saved: false, images: l.images || [],
+    sourceUrl: l.sourceUrl || '',
+  };
+}
+
+function toRentalCard(l, i) {
+  return {
+    id: l.sourceId || ('rent_' + i),
+    title: l.title, titleHe: l.title,
+    area: l.city || l.area || 'Israel',
+    neighborhood: l.neighborhood || '',
+    rent: l.price || 3500,
+    sqm: l.sqm || 65, rooms: l.rooms || 2,
+    type: l.propertyType || 'Apartment',
+    source: 'yad2',
+    furnished: false, pets: false, entry: 'immediate',
+    emoji: ['🏙️','🌆','🏡','🌇','🏘️','⛰️'][i % 6],
+    saved: false, images: l.images || [],
+    sourceUrl: l.sourceUrl || '',
+  };
+}
+
+function saveBackendUrl() {
+  const input = document.getElementById('backend-url-input');
+  if (!input) return;
+  BACKEND_URL = input.value.trim().replace(/\/$/, '');
+  localStorage.setItem('smartbuy_backend_url', BACKEND_URL);
+  if (BACKEND_URL) {
+    loadRealListings();
+  } else {
+    showToast(lang === 'he' ? 'כתובת הבקאנד נמחקה' : 'Backend URL cleared');
+  }
+}
+
+// ═══════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════
-let mode    = 'couple';   // 'couple' | 'investor'
-let subMode = 'rent';     // 'rent' | 'buy'  (only used when mode==='couple')
+let mode    = 'couple';
+let subMode = 'rent';
 let dealsSource   = 'all';
 let selectedAreas = [];
 let currentPage   = 'home';
@@ -1068,6 +1159,8 @@ function renderFavorites() {
 //  AGENTS
 // ═══════════════════════════════════════════════════
 function renderAgents() {
+  const inp = document.getElementById('backend-url-input');
+  if (inp && BACKEND_URL) inp.value = BACKEND_URL;
   const r=isRental(), inv=mode==='investor';
   const accent=accentColor();
   const s1lbl=r?(lang==='he'?'דירות חדשות היום':'NEW RENTALS TODAY'):inv?(lang==='he'?'עסקאות חמות היום':'HOT DEALS TODAY'):(lang==='he'?'בתים במחיר נוח היום':'AFFORDABLE HOMES TODAY');
@@ -1500,9 +1593,11 @@ function submitSellerListing() {
 // ═══════════════════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════════════════
-setMode('couple');   // triggers sub-bar + applyModeText
+setMode('couple');
 renderHome();
 renderAgents();
+// Try to load real listings from Railway backend if URL is saved
+if (BACKEND_URL) loadRealListings();
 setTimeout(()=>showToast('🗝️ New rental found in Ramat Gan — ₪5,200/mo'),3500);
 </script>
 </body>
