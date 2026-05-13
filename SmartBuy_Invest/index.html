@@ -36,6 +36,8 @@
   .mode-btn.couple.active   { background:#ec4899; color:white; }
   .mode-btn.investor { background:#eff6ff; color:#1e40af; }
   .mode-btn.investor.active { background:#2563eb; color:white; }
+  .mode-btn.seller   { background:#fffbeb; color:#92400e; }
+  .mode-btn.seller.active   { background:#f59e0b; color:white; }
 
   /* COUPLE SUB-TAB BAR */
   .sub-bar { position:fixed; top:104px; left:0; right:0; z-index:98; display:none; border-bottom:2px solid #fce7f3; background:#fdf2f8; }
@@ -79,6 +81,7 @@
 <div class="mode-bar">
   <button class="mode-btn couple active" id="btn-couple" onclick="setMode('couple')" data-key="mode_couple">💑 Young Couples</button>
   <button class="mode-btn investor" id="btn-investor" onclick="setMode('investor')" data-key="mode_investor">📈 Investors — Best ROI</button>
+  <button class="mode-btn seller" id="btn-seller" onclick="goToSellers()" data-key="mode_seller">🏷️ Sellers</button>
 </div>
 
 <!-- COUPLE SUB-TAB BAR (only visible in couple mode) -->
@@ -329,7 +332,7 @@ const TRANSLATIONS = {
   en: {
     nav_home:'🏠 Home', nav_search:'🔍 Search', nav_deals:'🔥 Deals', nav_compare:'⚖️ Compare',
     nav_fav:'❤️ Saved', nav_agents:'🤖 Agents',
-    mode_couple:'💑 Young Couples', mode_investor:'📈 Investors — Best ROI',
+    mode_couple:'💑 Young Couples', mode_investor:'📈 Investors — Best ROI', mode_seller:'🏷️ Sellers',
     sub_rent:'🏠 I Want to Rent', sub_buy:'🏡 I Want to Buy',
     ql_search:'Search', ql_deals:'Deals', ql_compare:'Compare Areas', ql_agents:'Agent Settings',
     see_all:'See all →',
@@ -391,7 +394,7 @@ const TRANSLATIONS = {
   he: {
     nav_home:'🏠 בית', nav_search:'🔍 חיפוש', nav_deals:'🔥 עסקאות', nav_compare:'⚖️ השוואה',
     nav_fav:'❤️ שמורים', nav_agents:'🤖 סוכנים',
-    mode_couple:'💑 זוגות צעירים', mode_investor:'📈 משקיעים — ROI מקסימלי',
+    mode_couple:'💑 זוגות צעירים', mode_investor:'📈 משקיעים — ROI מקסימלי', mode_seller:'🏷️ מוכרים',
     sub_rent:'🏠 אני רוצה לשכור', sub_buy:'🏡 אני רוצה לקנות',
     ql_search:'חיפוש', ql_deals:'עסקאות', ql_compare:'השוואת אזורים', ql_agents:'הגדרות סוכן',
     see_all:'הצג הכל ←',
@@ -729,12 +732,22 @@ function setMode(m) {
   mode = m;
   document.getElementById('btn-couple').classList.toggle('active',   m==='couple');
   document.getElementById('btn-investor').classList.toggle('active', m==='investor');
+  document.getElementById('btn-seller').classList.remove('active');
   const subBar = document.getElementById('sub-bar');
   subBar.classList.toggle('visible', m==='couple');
-  // adjust top padding when sub-bar is visible
   document.getElementById('main-wrap').style.paddingTop = m==='couple' ? '148px' : '112px';
   applyModeText();
   refreshCurrentPage();
+}
+
+function goToSellers() {
+  document.getElementById('btn-couple').classList.remove('active');
+  document.getElementById('btn-investor').classList.remove('active');
+  document.getElementById('btn-seller').classList.add('active');
+  document.getElementById('sub-bar').classList.remove('visible');
+  document.getElementById('main-wrap').style.paddingTop = '112px';
+  communityTab = 'sellers';
+  showPage('community', document.querySelector('[data-key="nav_community"]'));
 }
 
 function setSubMode(s) {
