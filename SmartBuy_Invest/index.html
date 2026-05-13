@@ -530,6 +530,7 @@ let postTag = 'buyers';
 let isPremium = false;
 let isSellerPaid = false;
 let sellerListingType = 'sale';
+let sellerPhotos = [];
 
 const SELLER_POSTS = [
   { id:201, listingType:'sale', propType:'Apartment', avatar:'👨', name:'Ron A.',
@@ -1365,6 +1366,18 @@ function renderSellersTab(container) {
       <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px;">${T('sf_desc')}</label>
       <textarea id="sf-desc" rows="3" placeholder="${T('sf_desc_ph')}"
         style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:13px;resize:none;outline:none;font-family:inherit;margin-bottom:14px;"></textarea>
+
+      <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:7px;">${lang==='he'?'תמונות הנכס (עד 6)':'PROPERTY PHOTOS (up to 6)'}</label>
+      <div onclick="document.getElementById('sf-photos').click()"
+        style="border:2px dashed #cbd5e1;border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:#f8fafc;margin-bottom:10px;transition:border-color 0.15s;"
+        onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#cbd5e1'">
+        <input type="file" id="sf-photos" multiple accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+        <p style="font-size:28px;margin:0;">📸</p>
+        <p style="font-size:13px;color:#64748b;margin-top:6px;font-weight:600;">${lang==='he'?'לחץ להוספת תמונות':'Click to add photos'}</p>
+        <p style="font-size:11px;color:#94a3b8;margin-top:3px;">${lang==='he'?'JPG, PNG — עד 6 תמונות':'JPG, PNG — up to 6 images'}</p>
+      </div>
+      <div id="photo-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;"></div>
+
       <button class="btn btn-p" style="width:100%;font-size:14px;padding:12px;" onclick="submitSellerListing()">${T('sf_submit')}</button>
     </div>
     <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">${T('seller_members')}</h3>
@@ -1403,6 +1416,9 @@ function sellerCard(p) {
         <p style="font-size:22px;font-weight:800;color:${col};">${priceStr}</p>
         <p style="font-size:12px;color:#334155;margin-top:3px;">📍 ${p.neighborhood?p.neighborhood+', ':''}${areaDisp} · 🛏 ${p.rooms} · 📐 ${p.sqm}${lang==='he'?' מ"ר':' sqm'}</p>
         <p style="font-size:13px;color:#475569;margin-top:6px;line-height:1.5;">${desc}</p>
+        ${p.photos && p.photos.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+          ${p.photos.map(src=>`<img src="${src}" style="width:90px;height:90px;object-fit:cover;border-radius:8px;border:1.5px solid #e2e8f0;cursor:pointer;" onclick="this.style.width=this.style.width==='90px'?'100%':'90px'">`).join('')}
+        </div>` : ''}
         <button class="btn" style="margin-top:10px;font-size:12px;padding:7px 16px;background:#25d366;color:white;font-weight:700;" onclick="contactSeller('${p.contact}')">
           💬 WhatsApp ${p.contact}
         </button>
@@ -1412,6 +1428,33 @@ function sellerCard(p) {
 }
 
 function contactSeller(phone) { showToast(T('whatsapp_open') + ': ' + phone); }
+
+function handlePhotoUpload(input) {
+  sellerPhotos = [];
+  const preview = document.getElementById('photo-preview');
+  if (!preview) return;
+  preview.innerHTML = '';
+  Array.from(input.files).slice(0, 6).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      sellerPhotos.push(e.target.result);
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:2px solid #e2e8f0;flex-shrink:0;';
+      wrap.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;">
+        <button onclick="removePhoto(this)" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1;">✕</button>`;
+      preview.appendChild(wrap);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePhoto(btn) {
+  const wrap = btn.parentElement;
+  const preview = document.getElementById('photo-preview');
+  const idx = Array.from(preview.children).indexOf(wrap);
+  sellerPhotos.splice(idx, 1);
+  wrap.remove();
+}
 
 function paySeller() {
   isSellerPaid = true;
@@ -1446,8 +1489,10 @@ function submitSellerListing() {
     area, neighborhood: neigh, price, rooms, sqm,
     pets, furnished: furn, entry, contact,
     desc: desc||propType, descHe: desc||propType,
-    time: T('comm_just_now'), timeHe: T('comm_just_now')
+    time: T('comm_just_now'), timeHe: T('comm_just_now'),
+    photos: [...sellerPhotos]
   });
+  sellerPhotos = [];
   showToast(T('seller_success'));
   renderCommunity();
 }
