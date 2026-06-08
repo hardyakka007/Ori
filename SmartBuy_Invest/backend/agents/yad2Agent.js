@@ -1,58 +1,79 @@
 const axios = require('axios');
 
-// Yad2 gateway API — used by their mobile app, less protected than the website
-const YAD2_BASE = 'https://gw.yad2.co.il/feed-search-legacy/realestate';
+const YAD2_FORSALE = 'https://gw.yad2.co.il/feed-search-legacy/realestate/forsale';
+const YAD2_RENT    = 'https://gw.yad2.co.il/feed-search-legacy/realestate/rent';
 
-// Headers that mimic the Yad2 iOS app to reduce bot detection
-const YAD2_HEADERS = {
-  'User-Agent': 'Yad2/6.5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15',
-  'Accept': 'application/json, text/plain, */*',
-  'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Referer': 'https://www.yad2.co.il/',
-  'Origin': 'https://www.yad2.co.il',
-  'mobile-app': 'true',
-  'mainsite': 'true',
+// Routes the request through ScraperAPI if a key is set,
+// otherwise tries a direct call (may be blocked by Cloudflare)
+function buildUrl(targetUrl, params) {
+  const query = new URLSearchParams({ ...params, forceLdLoad: true, page: 1, rows: 20 }).toString();
+  const fullTarget = `${targetUrl}?${query}`;
+
+  if (process.env.SCRAPER_API_KEY) {
+    return `http://api.scraperapi.com?api_key=${process.env.SCRAPER_API_KEY}&url=${encodeURIComponent(fullTarget)}`;
+  }
+  return fullTarget;
+}
+
+const DIRECT_HEADERS = {
+  'User-Agent':      'Yad2/6.5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15',
+  'Accept':          'application/json, text/plain, */*',
+  'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8',
+  'Referer':         'https://www.yad2.co.il/',
+  'Origin':          'https://www.yad2.co.il',
+  'mobile-app':      'true',
 };
 
 async function fetchYad2Listings({ minPrice, maxPrice, rooms, city } = {}) {
   const results = [];
 
   const endpoints = [
-    { url: `${YAD2_BASE}/forsale`, label: 'sale' },
-    { url: `${YAD2_BASE}/rent`,    label: 'rent' },
-  ];
-
-  for (const { url, label } of endpoints) {
-    try {
-      const params = {
+    {
+      base: YAD2_FORSALE,
+      label: 'sale',
+      params: {
         subCategory: 7,
-        priceMin: minPrice || (label === 'rent' ? 2000  : 300000),
-        priceMax: maxPrice || (label === 'rent' ? 20000 : 5000000),
+        priceMin: minPrice || 300000,
+        priceMax: maxPrice || 5000000,
         city: city || '',
         rooms: rooms || '',
-        page: 1,
-        rows: 20,
-        forceLdLoad: true,
-      };
+      },
+    },
+    {
+      base: YAD2_RENT,
+      label: 'rent',
+      params: {
+        subCategory: 7,
+        priceMin: minPrice || 2000,
+        priceMax: maxPrice || 20000,
+        city: city || '',
+        rooms: rooms || '',
+      },
+    },
+  ];
 
+  const usingProxy = !!process.env.SCRAPER_API_KEY;
+  console.log(`[Yad2Agent] Using ${usingProxy ? 'ScraperAPI proxy' : 'direct connection'}`);
+
+  for (const { base, label, params } of endpoints) {
+    try {
+      const url = buildUrl(base, params);
       const { data } = await axios.get(url, {
-        params,
-        headers: YAD2_HEADERS,
-        timeout: 15000,
+        headers: usingProxy ? {} : DIRECT_HEADERS,
+        timeout: 30000,
       });
 
-      const items = data?.data?.feed?.feed_items || [];
-      const ads = items.filter(i => i.type === 'ad').map(item => normalizeItem(item, label));
-      results.push(...ads);
-      console.log(`[Yad2Agent] ${label}: got ${ads.length} listings`);
+      const items = (data?.data?.feed?.feed_items || []).filter(i => i.type === 'ad');
+      const normalized = items.map(item => normalizeItem(item, label));
+      results.push(...normalized);
+      console.log(`[Yad2Agent] ${label}: fetched ${normalized.length} real listings`);
     } catch (err) {
-      console.error(`[Yad2Agent] ${label} fetch failed: ${err.message}`);
+      console.error(`[Yad2Agent] ${label} failed: ${err.message}`);
     }
   }
 
   if (results.length === 0) {
-    console.warn('[Yad2Agent] No real data — using mock fallback');
+    console.warn('[Yad2Agent] Could not fetch real data — falling back to mock listings');
     return getMockListings();
   }
 
